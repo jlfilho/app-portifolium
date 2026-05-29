@@ -175,7 +175,7 @@ Na execucao Docker com PostgreSQL, `SPRING_SQL_INIT_MODE=always` faz o Spring Bo
 Usuario administrador inicial:
 
 - Email: `admin@uea.edu.br`
-- Senha: `secretario123`
+- Senha: `admin123`
 
 ## Estrutura Principal
 
