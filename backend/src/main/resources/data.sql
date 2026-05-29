@@ -30,7 +30,20 @@ MERGE INTO role (id, nome) KEY(id) VALUES
 (3, 'ROLE_SECRETARIO'),
 (4, 'ROLE_COORDENADOR_ATIVIDADE');
 
--- Script SQL para criar 10 pessoas na tabela Pessoa
+-- Recria o administrador padrao de forma idempotente.
+-- Isso evita que um banco H2 persistido mantenha credenciais antigas.
+DELETE FROM usuario_roles
+WHERE usuario_id IN (
+    SELECT id FROM usuario WHERE email = 'admin@uea.edu.br' OR id = 1
+);
+
+DELETE FROM usuario
+WHERE email = 'admin@uea.edu.br' OR id = 1;
+
+DELETE FROM pessoa
+WHERE id = 1 OR cpf = '31452012040';
+
+-- Script SQL para criar a pessoa do administrador
 MERGE INTO pessoa (id, nome, cpf, created_at, created_by, updated_at, updated_by) KEY(id) VALUES
 (1, 'Administrador do Sistema', '31452012040', CURRENT_TIMESTAMP, 'system', CURRENT_TIMESTAMP, 'system');
 

@@ -37,21 +37,28 @@ INSERT INTO role (id, nome) VALUES
 (4, 'ROLE_COORDENADOR_ATIVIDADE')
 ON CONFLICT (id) DO NOTHING;
 
+-- Recria o administrador padrao de forma idempotente.
+-- Isso evita que um volume antigo mantenha um email/senha divergente.
+DELETE FROM usuario_roles
+WHERE usuario_id IN (
+    SELECT id FROM usuario WHERE email = 'admin@uea.edu.br' OR id = 1
+);
+
+DELETE FROM usuario
+WHERE email = 'admin@uea.edu.br' OR id = 1;
+
+DELETE FROM pessoa
+WHERE id = 1 OR cpf = '31452012040';
+
 -- Populando a tabela Pessoa (Administrador do Sistema)
 -- CPF válido: 314.520.120-40
 INSERT INTO pessoa (id, nome, cpf, created_at, created_by, updated_at, updated_by) VALUES
-(1, 'Administrador do Sistema', '31452012040', CURRENT_TIMESTAMP, 'system', CURRENT_TIMESTAMP, 'system')
-ON CONFLICT (id) DO NOTHING;
+(1, 'Administrador do Sistema', '31452012040', CURRENT_TIMESTAMP, 'system', CURRENT_TIMESTAMP, 'system');
 
 -- Populando a tabela Usuario (admin)
 -- Senha: admin123 (criptografada com BCrypt)
 INSERT INTO usuario (id, email, senha, pessoa_id, created_at, updated_at) VALUES
-(1, 'admin@uea.edu.br', '$2a$10$hVfJIfpLdpbxwPiRfT2eheqDQlgklnzXZu81UYBa3bjOb5QtAAz.W', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET
-email = EXCLUDED.email,
-senha = EXCLUDED.senha,
-pessoa_id = EXCLUDED.pessoa_id,
-updated_at = CURRENT_TIMESTAMP;
+(1, 'admin@uea.edu.br', '$2a$10$hVfJIfpLdpbxwPiRfT2eheqDQlgklnzXZu81UYBa3bjOb5QtAAz.W', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- Populando a tabela Usuario_Roles (associação admin com role de administrador)
 INSERT INTO usuario_roles (usuario_id, role_id) VALUES
