@@ -12,6 +12,8 @@ frontend/test-results/
 
 portifolium-files/
 *.log
+BUGS.md
+PLANO_TESTE.md
 
 # Repositorios antigos mantidos temporariamente fora do monorepo.
 app-Portifolium-api-restfull/

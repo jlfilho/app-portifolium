@@ -1,2 +1,0 @@
-- Melhoria, em pessoas, não aparecer o cpf completo para gerente, secretário e coordenador de atividade.
--
