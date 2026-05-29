@@ -1,0 +1,18 @@
+.env
+.env.local
+.env.*.local
+
+backend/target/
+backend/data/
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/playwright-report/
+frontend/test-results/
+
+portifolium-files/
+*.log
+
+# Repositorios antigos mantidos temporariamente fora do monorepo.
+app-Portifolium-api-restfull/
+app-Portifolium-frontend/

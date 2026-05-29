@@ -1,0 +1,660 @@
+/* Container Principal */
+.courses-container {
+  width: 100%;
+  overflow-y: auto;
+}
+
+/* Header */
+.courses-header {
+  margin-bottom: var(--spacing-lg);
+}
+
+.courses-header h2 {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.courses-header h2::before {
+  content: '📚';
+  font-size: 32px;
+}
+
+.courses-header .add-button:disabled,
+.app-empty-state .add-button:disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  background: var(--bg-darker) !important;
+  background-color: var(--bg-darker) !important;
+  color: var(--text-light) !important;
+  box-shadow: none !important;
+  filter: grayscale(25%);
+}
+
+.courses-header .add-button:disabled mat-icon,
+.app-empty-state .add-button:disabled mat-icon {
+  color: var(--text-light) !important;
+}
+
+.space {
+  flex: 1;
+}
+
+/* Divider */
+mat-divider {
+  margin-bottom: 24px;
+}
+
+/* Grid List */
+.grid-list {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Grid Tile - Remover padding padrão do Material */
+::ng-deep .grid-list .mat-grid-tile {
+  overflow: visible !important;
+}
+
+::ng-deep .grid-list .mat-grid-tile .mat-grid-tile-content {
+  top: 12px !important;
+  left: 12px !important;
+  right: 12px !important;
+  bottom: 12px !important;
+  position: absolute;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+/* Card */
+.card {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+}
+
+.card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+}
+
+/* Card Header - Nova Paleta */
+.card-header {
+  background: var(--gradient-primary);
+  color: white;
+  padding: 16px;
+  border-radius: 12px 12px 0 0 !important;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+::ng-deep .card-header .mat-card-header-text {
+  margin: 0 8px;
+  flex: 1;
+}
+
+.header-image {
+  background-image: url('/imagens/logo.webp');
+  background-size: cover;
+  background-position: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+::ng-deep .card-header .mat-card-title {
+  color: white !important;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 !important;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Botão Editar no Header */
+.edit-button {
+  color: white !important;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+}
+
+.edit-button:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  transform: scale(1.1);
+}
+
+.edit-button mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+/* Card Image */
+.card-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+}
+
+/* Chip de tipo do curso nos cards internos */
+.tipo-chip-set {
+  padding: 8px 16px 0 16px;
+}
+
+/* remove custom tipo-chip; using global chip-highlight */
+
+/* Card Actions */
+mat-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 12px 16px !important;
+  background: var(--bg-darker);
+  border-top: 1px solid var(--border-color);
+  gap: 4px;
+  margin: 0 !important;
+}
+
+mat-card-actions button {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: transparent !important;
+  color: var(--text-medium) !important;
+  transition: all 0.2s ease;
+}
+
+mat-card-actions button:hover {
+  background: var(--bg-hover) !important;
+  transform: scale(1.1);
+}
+
+/* Cores específicas dos botões de ação */
+mat-card-actions button:nth-child(1) {
+  color: var(--secondary-color) !important; /* Gerenciar - Azul Ciano */
+}
+
+mat-card-actions button:nth-child(2) {
+  color: var(--warning-color) !important; /* Permissões - Laranja */
+}
+
+mat-card-actions button:nth-child(3) {
+  color: var(--success-color) !important; /* Publicar - Verde */
+}
+
+mat-card-actions button:nth-child(4) {
+  color: var(--error-color) !important; /* Excluir - Vermelho */
+}
+
+mat-card-actions button:hover:nth-child(1) {
+  background: rgba(56, 189, 248, 0.1) !important;
+}
+
+mat-card-actions button:hover:nth-child(2) {
+  background: rgba(245, 158, 11, 0.1) !important;
+}
+
+mat-card-actions button:hover:nth-child(3) {
+  background: rgba(16, 185, 129, 0.1) !important;
+}
+
+mat-card-actions button:hover:nth-child(4) {
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+mat-card-actions button.app-icon-manage {
+  color: var(--secondary-color) !important;
+}
+
+mat-card-actions button.app-icon-status {
+  color: var(--success-color) !important;
+}
+
+mat-card-actions button.app-icon-danger {
+  color: var(--error-color) !important;
+}
+
+mat-card-actions button mat-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+}
+
+/* Mensagem de Erro */
+.error {
+  background: color-mix(in srgb, var(--error-color) 12%, white);
+  color: var(--error-color);
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  border-left: 4px solid var(--error-color);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.error::before {
+  content: '⚠️';
+  font-size: 24px;
+}
+
+/* ===== FILTROS ===== */
+.filters-section {
+  margin: 24px 0;
+  padding: 20px;
+  background-color: var(--bg-content);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.filters-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin: 0 0 16px 0;
+}
+
+.filters-title mat-icon {
+  color: var(--primary-color);
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr auto;
+  gap: 16px;
+  align-items: start;
+}
+
+.filter-field {
+  width: 100%;
+}
+
+.btn-clear-filters {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Filtros ativos */
+.active-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+  flex-wrap: wrap;
+}
+
+.filters-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-medium);
+}
+
+.filter-chip {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+  font-weight: 500;
+}
+
+.filter-chip mat-icon {
+  color: white !important;
+}
+
+::ng-deep .filter-chip .mat-mdc-chip-action-label {
+  color: white !important;
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 80px 24px;
+  color: var(--text-medium);
+}
+
+.loading span {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* Stats row */
+.stats-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 20px 0;
+  padding: 12px 16px;
+  background-color: rgba(59, 130, 246, 0.08);
+  border-radius: 8px;
+  border-left: 4px solid var(--primary-color);
+  color: var(--text-dark);
+  font-size: 14px;
+  flex-wrap: wrap;
+}
+
+.stats-row span {
+  color: var(--text-dark);
+  font-weight: 400;
+}
+
+.stats-row strong {
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 18px;
+}
+
+/* Paginação */
+.paginator {
+  margin-top: 24px;
+  background: transparent;
+}
+
+::ng-deep .mat-mdc-paginator {
+  background: transparent !important;
+}
+
+/* Mensagem quando não há cursos */
+.courses-container p {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-light);
+  font-size: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.courses-container p::before {
+  content: '📚';
+  font-size: 64px;
+  opacity: 0.3;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 80px 24px;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 80px;
+  width: 80px;
+  height: 80px;
+  color: var(--text-light);
+  opacity: 0.5;
+}
+
+.empty-state p {
+  font-size: 18px;
+  color: var(--text-medium);
+  margin: 0;
+  padding: 0;
+}
+
+.empty-state p::before {
+  display: none;
+}
+
+.empty-state button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* Responsividade */
+@media (max-width: 1200px) {
+  ::ng-deep .grid-list {
+    /* 2 colunas em telas médias */
+  }
+}
+
+@media (max-width: 768px) {
+  .courses-container {
+    padding: 16px;
+  }
+
+  .courses-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  /* Filtros responsivo */
+  .filters-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .btn-clear-filters {
+    width: 100%;
+    height: 48px;
+  }
+
+  .filters-section {
+    padding: 16px;
+  }
+
+  ::ng-deep .grid-list {
+    /* 1 coluna em mobile */
+  }
+
+  .card-image {
+    height: 160px;
+  }
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Tooltip customizado - Paleta Educação Moderna */
+::ng-deep .mat-mdc-tooltip {
+  background: var(--bg-dark) !important;
+  color: var(--text-primary) !important;
+  font-size: 12px !important;
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  border: none !important;
+  outline: none !important;
+}
+
+/* Remover qualquer contorno ou borda do tooltip */
+::ng-deep .mat-mdc-tooltip .mdc-tooltip__surface {
+  background: var(--bg-dark) !important;
+  color: var(--text-primary) !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Fix para overflow do container pai */
+::ng-deep mat-sidenav-content {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* Melhorar scroll */
+.courses-container {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) var(--bg-darker);
+}
+
+.courses-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.courses-container::-webkit-scrollbar-track {
+  background: var(--bg-darker);
+  border-radius: 4px;
+}
+
+.courses-container::-webkit-scrollbar-thumb {
+  background: var(--primary-button-gradient);
+  border-radius: 4px;
+}
+
+.courses-container::-webkit-scrollbar-thumb:hover {
+  background: var(--gradient-accent);
+}
+
+/* ========================================
+   🔄 BOTÃO DE STATUS (ATIVAR/DESATIVAR)
+   ======================================== */
+
+/* Botão quando curso está ATIVO */
+.status-active {
+  color: var(--success-color) !important;
+  background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+.status-active:hover {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  transform: scale(1.1);
+}
+
+.status-active mat-icon {
+  color: var(--success-color) !important;
+}
+
+/* Botão quando curso está INATIVO */
+.status-inactive {
+  color: var(--text-medium) !important;
+  background-color: rgba(100, 116, 139, 0.1) !important;
+}
+
+.status-inactive:hover {
+  background-color: rgba(100, 116, 139, 0.2) !important;
+  transform: scale(1.1);
+}
+
+.status-inactive mat-icon {
+  color: var(--text-medium) !important;
+}
+
+/* ========================================
+   📦 CARD INATIVO - VISUAL APAGADO
+   ======================================== */
+
+/* Card quando curso está inativo */
+.card-inactive {
+  opacity: 0.6;
+  filter: grayscale(30%);
+  position: relative;
+}
+
+.card-inactive::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card-inactive:hover {
+  opacity: 0.75;
+  filter: grayscale(20%);
+}
+
+/* Header do card inativo */
+.card-inactive .card-header {
+  opacity: 0.7;
+  filter: saturate(0.5);
+}
+
+/* Imagem do card inativo */
+.card-inactive .card-image {
+  opacity: 0.5;
+  filter: grayscale(50%);
+}
+
+/* Título do card inativo */
+.card-inactive mat-card-title {
+  opacity: 0.8;
+}
+
+/* Botões do card inativo (exceto o de status) */
+.card-inactive mat-card-actions button:not(.status-inactive) {
+  opacity: 0.6;
+}
+
+.card-inactive mat-card-actions button:not(.status-inactive):hover {
+  opacity: 0.9;
+}
+
+/* ===== Header text layout to place chip under title within header ===== */
+.header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-left: 8px;
+  flex: 1;
+}
+
+/* Remove extra padding in header and add small spacing below title */
+.card-header .tipo-chip-set {
+  padding: 0;
+  margin-top: 4px;
+}

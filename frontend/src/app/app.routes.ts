@@ -1,0 +1,87 @@
+import { Routes } from '@angular/router';
+import { authGuard } from './shared/auth.guard';
+
+export const routes: Routes = [
+  {
+    path: 'login',
+    loadComponent: () => import('./auth/login/login.component').then(m => m.LoginComponent)
+  },
+  {
+    path: 'recuperar-senha',
+    loadComponent: () => import('./auth/components/recuperar-senha/recuperar-senha.component').then(m => m.RecuperarSenhaComponent),
+    title: 'Recuperar Senha'
+  },
+  // Rotas públicas
+  {
+    path: 'cursos-publicos',
+    loadComponent: () => import('./public/components/cursos-publicos/cursos-publicos.component').then(m => m.CursosPublicosComponent),
+    title: 'Cursos Disponíveis'
+  },
+  {
+    path: 'atividades-publicas/curso/:cursoId',
+    loadComponent: () => import('./public/components/atividades-publicas/atividades-publicas.component').then(m => m.AtividadesPublicasComponent),
+    title: 'Atividades do Curso'
+  },
+  {
+    path: 'atividade-publica/:atividadeId',
+    loadComponent: () => import('./public/components/visualizar-atividade/visualizar-atividade.component').then(m => m.VisualizarAtividadeComponent),
+    title: 'Visualizar Atividade'
+  },
+  {
+    path: 'sobre',
+    loadComponent: () => import('./public/components/sobre/sobre.component').then(m => m.SobreComponent),
+    title: 'Sobre'
+  },
+  // Rota default - redireciona para página pública
+  {
+    path: '',
+    redirectTo: 'cursos-publicos',
+    pathMatch: 'full'
+  },
+  // Área administrativa
+  {
+    path: 'admin',
+    loadComponent: () => import('./dashboard/home/home.component').then(m => m.HomeComponent),
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full'
+      },
+      {
+        path: '',
+        loadChildren: () => import('./dashboard/dashboard.routes').then(m => m.DASHBOARD_ROUTES)
+      },
+      {
+        path: '',
+        loadChildren: () => import('./features/cursos/cursos.routes').then(m => m.CURSOS_ROUTES)
+      },
+      {
+        path: '',
+        loadChildren: () => import('./features/usuarios/usuarios.routes').then(m => m.USUARIOS_ROUTES)
+      },
+      {
+        path: '',
+        loadChildren: () => import('./features/atividades/atividades.routes').then(m => m.atividadesRoutes)
+      },
+      {
+        path: '',
+        loadChildren: () => import('./features/unidades-academicas/unidades-academicas.routes').then(m => m.UNIDADES_ACADEMICAS_ROUTES)
+      },
+      {
+        path: '',
+        loadChildren: () => import('./features/pessoas/pessoas.routes').then(m => m.PESSOAS_ROUTES)
+      },
+      {
+        path: '',
+        loadChildren: () => import('./features/auditoria/auditoria.routes').then(m => m.AUDITORIA_ROUTES)
+      }
+    ]
+  },
+  {
+    path: '**',
+    loadComponent: () => import('./shared/not-found/not-found.component').then(m => m.NotFoundComponent)
+  }
+];
+

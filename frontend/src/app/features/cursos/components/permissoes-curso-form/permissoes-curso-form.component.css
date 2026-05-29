@@ -1,0 +1,299 @@
+:host {
+  /* Usa variáveis globais de src/styles/variables.css */
+}
+
+.permissoes-container {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 0;
+  overflow: hidden;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+mat-card-content {
+  padding: 24px;
+  background: #fff;
+}
+
+.add-user-row {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  margin-bottom: 12px;
+}
+
+.add-user-row mat-form-field { flex: 1; }
+
+.add-user-row button {
+  align-self: stretch;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--spacing-md);
+}
+
+::ng-deep .add-user-row .mat-mdc-form-field-flex {
+  height: 56px;
+}
+
+.full-width { flex: 1; }
+
+.permissions-list .empty {
+  color: var(--text-medium);
+}
+
+/* Botão de remoção seguindo padrão do formulário de usuários */
+.remove-button {
+  color: var(--error-color) !important;
+  transition: all 0.2s ease;
+}
+
+.remove-button:hover {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  transform: scale(1.1);
+}
+
+::ng-deep .mat-mdc-icon-button[color="warn"] .mat-mdc-button-persistent-ripple {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+}
+
+/* List styles */
+::ng-deep .mat-mdc-list-item:hover { background-color: var(--bg-hover) !important; }
+
+.permissions-list {
+  margin-top: 16px;
+}
+
+/* Layout do título com role ao lado */
+.user-title-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex-wrap: wrap !important;
+}
+
+.user-name {
+  color: var(--text-dark);
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.badge-status {
+  font-weight: var(--font-weight-medium) !important;
+  font-size: 12px !important;
+  gap: var(--spacing-xs) !important;
+}
+
+.badge-status .role-icon,
+.badge-status mat-icon {
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
+/* ========================================
+   🎨 MATERIAL OVERRIDES - Mesmo padrão da lista de usuários
+   ======================================== */
+/* Administrador: mat-warn -> --primary-color */
+::ng-deep .badge-status.mat-mdc-chip.mat-warn {
+  --mdc-chip-label-text-color: white !important;
+  --mdc-chip-elevated-container-color: var(--primary-color) !important;
+  --mdc-chip-container-color: var(--primary-color) !important;
+  background-color: var(--primary-color) !important;
+}
+
+::ng-deep .badge-status.mat-mdc-chip.mat-warn .mat-mdc-chip-action-label,
+::ng-deep .badge-status.mat-mdc-chip.mat-warn span,
+::ng-deep .badge-status.mat-mdc-chip.mat-warn .mat-icon,
+::ng-deep .badge-status.mat-mdc-chip.mat-warn .role-icon {
+  color: white !important;
+}
+
+/* Gerente: mat-primary -> --secondary-color */
+::ng-deep .badge-status.mat-mdc-chip.mat-primary {
+  --mdc-chip-label-text-color: white !important;
+  --mdc-chip-elevated-container-color: var(--secondary-color) !important;
+  --mdc-chip-container-color: var(--secondary-color) !important;
+  background-color: var(--secondary-color) !important;
+}
+
+::ng-deep .badge-status.mat-mdc-chip.mat-primary .mat-mdc-chip-action-label,
+::ng-deep .badge-status.mat-mdc-chip.mat-primary span,
+::ng-deep .badge-status.mat-mdc-chip.mat-primary .mat-icon,
+::ng-deep .badge-status.mat-mdc-chip.mat-primary .role-icon {
+  color: white !important;
+}
+
+/* Secretário: mat-accent -> --accent-color */
+::ng-deep .badge-status.mat-mdc-chip.mat-accent {
+  --mdc-chip-label-text-color: white !important;
+  --mdc-chip-elevated-container-color: var(--accent-color) !important;
+  --mdc-chip-container-color: var(--accent-color) !important;
+  background-color: var(--accent-color) !important;
+}
+
+::ng-deep .badge-status.mat-mdc-chip.mat-accent .mat-mdc-chip-action-label,
+::ng-deep .badge-status.mat-mdc-chip.mat-accent span,
+::ng-deep .badge-status.mat-mdc-chip.mat-accent .mat-icon,
+::ng-deep .badge-status.mat-mdc-chip.mat-accent .role-icon {
+  color: white !important;
+}
+
+/* Coordenador de Atividade: coordenador-atividade -> --accent-color-light */
+::ng-deep .badge-status.mat-mdc-chip.coordenador-atividade {
+  --mdc-chip-label-text-color: white !important;
+  --mdc-chip-elevated-container-color: var(--accent-color-light) !important;
+  --mdc-chip-container-color: var(--accent-color-light) !important;
+  background-color: var(--accent-color-light) !important;
+}
+
+::ng-deep .badge-status.mat-mdc-chip.coordenador-atividade .mat-mdc-chip-action-label,
+::ng-deep .badge-status.mat-mdc-chip.coordenador-atividade span,
+::ng-deep .badge-status.mat-mdc-chip.coordenador-atividade .mat-icon,
+::ng-deep .badge-status.mat-mdc-chip.coordenador-atividade .role-icon {
+  color: white !important;
+}
+
+/* Fallback para chips sem classe Material (caso existam) */
+.badge-status.error {
+  background: var(--primary-color) !important;
+  color: white !important;
+}
+
+.badge-status.success {
+  background: var(--secondary-color) !important;
+  color: white !important;
+}
+
+.badge-status.warn {
+  background: var(--accent-color) !important;
+  color: white !important;
+}
+
+.user-id {
+  color: var(--text-light);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Estilos para o stats-row */
+.stats-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background-color: rgba(59, 130, 246, 0.08);
+  border-radius: 8px;
+  border-left: 4px solid var(--primary-color);
+  color: var(--text-dark);
+  font-size: 14px;
+}
+
+.stats-row span {
+  color: var(--text-dark);
+  font-weight: 400;
+}
+
+.stats-row strong {
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 18px;
+}
+
+/* ========================================
+   🎨 TOOLTIPS DE PAPEL (ROLE TOOLTIPS)
+   ======================================== */
+/* Tooltip para Administrador - Cor verde primária */
+::ng-deep .role-tooltip-administrador {
+  --mdc-plain-tooltip-container-color: var(--primary-color) !important;
+  --mdc-plain-tooltip-supporting-text-color: white !important;
+  background-color: var(--primary-color) !important;
+  color: white !important;
+}
+
+::ng-deep .role-tooltip-administrador .mdc-tooltip__surface {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+}
+
+::ng-deep .role-tooltip-administrador .mdc-tooltip__surface-text {
+  color: white !important;
+}
+
+/* Tooltip para Gerente - Cor verde secundária */
+::ng-deep .role-tooltip-gerente {
+  --mdc-plain-tooltip-container-color: var(--secondary-color) !important;
+  --mdc-plain-tooltip-supporting-text-color: white !important;
+  background-color: var(--secondary-color) !important;
+  color: white !important;
+}
+
+::ng-deep .role-tooltip-gerente .mdc-tooltip__surface {
+  background-color: var(--secondary-color) !important;
+  color: white !important;
+}
+
+::ng-deep .role-tooltip-gerente .mdc-tooltip__surface-text {
+  color: white !important;
+}
+
+/* Tooltip para Secretário - Cor accent */
+::ng-deep .role-tooltip-secretario {
+  --mdc-plain-tooltip-container-color: var(--accent-color) !important;
+  --mdc-plain-tooltip-supporting-text-color: white !important;
+  background-color: var(--accent-color) !important;
+  color: white !important;
+}
+
+::ng-deep .role-tooltip-secretario .mdc-tooltip__surface {
+  background-color: var(--accent-color) !important;
+  color: white !important;
+}
+
+::ng-deep .role-tooltip-secretario .mdc-tooltip__surface-text {
+  color: white !important;
+}
+
+/* Tooltip para Coordenador de Atividade - Cor accent-light */
+::ng-deep .role-tooltip-coordenador-atividade {
+  --mdc-plain-tooltip-container-color: var(--accent-color-light) !important;
+  --mdc-plain-tooltip-supporting-text-color: white !important;
+  background-color: var(--accent-color-light) !important;
+  color: white !important;
+}
+
+::ng-deep .role-tooltip-coordenador-atividade .mdc-tooltip__surface {
+  background-color: var(--accent-color-light) !important;
+  color: white !important;
+}
+
+::ng-deep .role-tooltip-coordenador-atividade .mdc-tooltip__surface-text {
+  color: white !important;
+}
+
+/* Tooltip padrão (fallback) */
+::ng-deep .role-tooltip-default {
+  --mdc-plain-tooltip-container-color: var(--text-dark) !important;
+  --mdc-plain-tooltip-supporting-text-color: white !important;
+  background-color: var(--text-dark) !important;
+  color: white !important;
+}
+
+::ng-deep .role-tooltip-default .mdc-tooltip__surface {
+  background-color: var(--text-dark) !important;
+  color: white !important;
+}
+
+::ng-deep .role-tooltip-default .mdc-tooltip__surface-text {
+  color: white !important;
+}
+
+

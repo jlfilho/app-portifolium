@@ -1,0 +1,395 @@
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatCardModule } from '@angular/material/card';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatBadgeModule } from '@angular/material/badge';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { AtividadeDTO, EvidenciaDTO, PessoaPapelDTO } from '../../models/public.models';
+// Services
+import { PublicApiService } from '../../services/public-api.service';
+import { PublicNavigationService } from '../../services/public-navigation.service';
+import { BreaklinesPipe } from '../../../shared/pipes/breaklines.pipe';
+
+@Component({
+  selector: 'acadmanage-visualizar-atividade-publica',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatButtonModule,
+    MatIconModule,
+    MatChipsModule,
+    MatDividerModule,
+    MatCardModule,
+    MatTooltipModule,
+    MatProgressSpinnerModule,
+    MatSnackBarModule,
+    MatBadgeModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatPaginatorModule,
+    BreaklinesPipe
+  ],
+  templateUrl: './visualizar-atividade.component.html',
+  styleUrl: './visualizar-atividade.component.css'
+})
+export class VisualizarAtividadeComponent implements OnInit, OnDestroy {
+  atividade: AtividadeDTO | null = null;
+  atividadeId!: number;
+  cursoId!: number;
+  cursoNome: string = '';
+  isLoading = true;
+  errorMessage = '';
+  evidencias: EvidenciaDTO[] = [];
+  isLoadingEvidencias = false;
+
+  // Carrossel de evidências
+  currentSlideIndex = 0;
+  carrosselPageSize = 5;
+  carrosselPageIndex = 0;
+  integrantesPageSize = 6;
+  integrantesPageIndex = 0;
+  lightboxOpen = false;
+  lightboxIndex = 0;
+  private scrollLocked = false;
+
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private publicApiService: PublicApiService,
+    private publicNavigationService: PublicNavigationService,
+    private snackBar: MatSnackBar
+  ) {}
+
+  ngOnInit(): void {
+    // Obter ID da atividade da rota
+    this.atividadeId = Number(this.route.snapshot.paramMap.get('atividadeId'));
+
+    // Tentar obter informações do curso do state
+    const navigation = this.router.getCurrentNavigation();
+    const state = navigation?.extras?.state || this.router.lastSuccessfulNavigation?.extras?.state;
+    this.cursoId = (state && state['cursoId']) || 0;
+    this.cursoNome = (state && state['cursoNome']) || 'Curso';
+
+    this.loadAtividade();
+    this.loadEvidencias();
+  }
+
+  ngOnDestroy(): void {
+    this.enableScroll();
+  }
+
+  loadAtividade(): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    
+    this.publicApiService.getAtividadeById(this.atividadeId).subscribe({
+      next: (atividade: AtividadeDTO) => {
+        this.atividade = atividade;
+        this.integrantesPageIndex = 0;
+        this.isLoading = false;
+              },
+      error: (error: any) => {
+        console.error('❌ Erro ao carregar atividade:', error);
+        this.errorMessage = 'Erro ao carregar atividade';
+        this.integrantesPageIndex = 0;
+        this.isLoading = false;
+        this.showMessage('Erro ao carregar atividade', 'error');
+      }
+    });
+  }
+
+  loadEvidencias(): void {
+    this.isLoadingEvidencias = true;
+    
+    this.publicApiService.getEvidenciasPorAtividade(this.atividadeId).subscribe({
+      next: (evidencias: EvidenciaDTO[] | null) => {
+        const normalized = Array.isArray(evidencias)
+          ? evidencias.map(e => this.normalizeEvidencia(e))
+          : [];
+        this.evidencias = this.sortEvidencias(normalized);
+        this.currentSlideIndex = 0;
+        this.carrosselPageIndex = 0;
+        this.lightboxIndex = 0;
+        this.isLoadingEvidencias = false;
+              },
+      error: (error: any) => {
+        console.error('❌ Erro ao carregar evidências:', error);
+        this.evidencias = [];
+        this.currentSlideIndex = 0;
+        this.carrosselPageIndex = 0;
+        this.lightboxIndex = 0;
+        this.isLoadingEvidencias = false;
+      }
+    });
+  }
+
+  // Métodos do carrossel de evidências
+  get evidenciasPaginadas(): EvidenciaDTO[] {
+    const start = this.carrosselPageIndex * this.carrosselPageSize;
+    const end = start + this.carrosselPageSize;
+    return this.evidencias.slice(start, end);
+  }
+
+  get currentEvidencia(): EvidenciaDTO | null {
+    return this.evidenciasPaginadas[this.currentSlideIndex] || null;
+  }
+
+  get totalCarrosselPages(): number {
+    return Math.ceil(this.evidencias.length / this.carrosselPageSize);
+  }
+
+  get hasMultiplePages(): boolean {
+    return this.evidencias.length > this.carrosselPageSize;
+  }
+
+  previousSlide(): void {
+    if (this.evidenciasPaginadas.length === 0) return;
+    this.currentSlideIndex = (this.currentSlideIndex - 1 + this.evidenciasPaginadas.length) % this.evidenciasPaginadas.length;
+  }
+
+  nextSlide(): void {
+    if (this.evidenciasPaginadas.length === 0) return;
+    this.currentSlideIndex = (this.currentSlideIndex + 1) % this.evidenciasPaginadas.length;
+  }
+
+  goToSlide(index: number): void {
+    this.currentSlideIndex = index;
+  }
+
+  previousCarrosselPage(): void {
+    if (this.carrosselPageIndex > 0) {
+      this.carrosselPageIndex--;
+      this.currentSlideIndex = 0;
+    }
+  }
+
+  nextCarrosselPage(): void {
+    if (this.carrosselPageIndex < this.totalCarrosselPages - 1) {
+      this.carrosselPageIndex++;
+      this.currentSlideIndex = 0;
+    }
+  }
+
+  goToCarrosselPage(pageIndex: number): void {
+    if (pageIndex >= 0 && pageIndex < this.totalCarrosselPages) {
+      this.carrosselPageIndex = pageIndex;
+      this.currentSlideIndex = 0;
+    }
+  }
+
+  openLightbox(evidencia: EvidenciaDTO): void {
+    const index = this.evidencias.findIndex(e => e.id === evidencia.id);
+    if (index === -1) {
+      return;
+    }
+    this.lightboxIndex = index;
+    this.lightboxOpen = true;
+    this.disableScroll();
+      }
+
+  closeLightbox(): void {
+    this.lightboxOpen = false;
+    this.enableScroll();
+      }
+
+  nextLightbox(): void {
+    if (!this.evidencias.length) return;
+    this.lightboxIndex = (this.lightboxIndex + 1) % this.evidencias.length;
+      }
+
+  prevLightbox(): void {
+    if (!this.evidencias.length) return;
+    this.lightboxIndex = (this.lightboxIndex - 1 + this.evidencias.length) % this.evidencias.length;
+      }
+
+  goToLightbox(index: number): void {
+    if (index < 0 || index >= this.evidencias.length) {
+      return;
+    }
+    this.lightboxIndex = index;
+      }
+
+  get lightboxEvidencia(): EvidenciaDTO | null {
+    return this.evidencias[this.lightboxIndex] || null;
+  }
+
+  get coordenadoresExibidos(): PessoaPapelDTO[] {
+    return this.getParticipantesOrdenados().filter(participante => participante.papel === 'COORDENADOR');
+  }
+
+  get participantesSemCoordenador(): PessoaPapelDTO[] {
+    return this.getParticipantesOrdenados().filter(participante => participante.papel !== 'COORDENADOR');
+  }
+
+  get participantesPaginados(): PessoaPapelDTO[] {
+    const start = this.integrantesPageIndex * this.integrantesPageSize;
+    const end = start + this.integrantesPageSize;
+    return this.participantesSemCoordenador.slice(start, end);
+  }
+
+  get totalParticipantesPaginas(): number {
+    return Math.max(1, Math.ceil(this.participantesSemCoordenador.length / this.integrantesPageSize));
+  }
+
+  get hasMoreParticipantesPages(): boolean {
+    return this.participantesSemCoordenador.length > this.integrantesPageSize;
+  }
+
+  onParticipantesPageChange(event: PageEvent): void {
+    this.integrantesPageIndex = event.pageIndex;
+  }
+
+  getLightboxImageUrl(): string {
+    const evidencia = this.lightboxEvidencia;
+    return evidencia ? this.getEvidenciaImageUrlFromEvidencia(evidencia) : '';
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  handleKeyboard(event: KeyboardEvent): void {
+    if (!this.lightboxOpen) {
+      return;
+    }
+
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      this.nextLightbox();
+    } else if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      this.prevLightbox();
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeLightbox();
+    }
+  }
+
+  private disableScroll(): void {
+    if (this.scrollLocked) return;
+    document.body.style.overflow = 'hidden';
+    this.scrollLocked = true;
+  }
+
+  private enableScroll(): void {
+    if (!this.scrollLocked) return;
+    document.body.style.overflow = '';
+    this.scrollLocked = false;
+  }
+
+  // Voltar para atividades do curso
+  voltarParaAtividades(): void {
+    this.publicNavigationService.navigateBackToAtividades(this.cursoId, this.cursoNome);
+  }
+
+  // Voltar para cursos públicos
+  voltarParaCursos(): void {
+    this.publicNavigationService.navigateBackToCursos();
+  }
+
+  // Formatar data
+  formatarData(data: string): string {
+    if (!data) return 'Data não informada';
+    const dataObj = new Date(data + 'T00:00:00');
+    return dataObj.toLocaleDateString('pt-BR');
+  }
+
+  // Formatar data da atividade (suporta período)
+  formatarDataAtividade(atividade: any): string {
+    if (!atividade?.dataRealizacao) return 'Data não informada';
+    
+    const dataInicio = new Date(atividade.dataRealizacao + 'T00:00:00');
+    const dataInicioFormatada = dataInicio.toLocaleDateString('pt-BR');
+    
+    if (!atividade.dataFim) {
+      // Evento em data única
+      return dataInicioFormatada;
+    } else {
+      // Evento em período
+      const dataFim = new Date(atividade.dataFim + 'T00:00:00');
+      const dataFimFormatada = dataFim.toLocaleDateString('pt-BR');
+      return `${dataInicioFormatada} a ${dataFimFormatada}`;
+    }
+  }
+
+  // Obter URL da imagem
+  getImageUrl(fotoCapa: string): string {
+    if (!fotoCapa) return '';
+    if (fotoCapa.startsWith('http')) {
+      return fotoCapa;
+    }
+    return `http://localhost:8080/api/files${fotoCapa}`;
+  }
+
+  // Obter URL da evidência
+  getEvidenciaImageUrl(foto: string): string {
+    return this.publicApiService.getEvidenciaImageUrl(foto);
+  }
+
+  getEvidenciaImageUrlFromEvidencia(evidencia: EvidenciaDTO | null | undefined): string {
+    return this.publicApiService.getEvidenciaImageUrl(this.getEvidenciaFotoPath(evidencia));
+  }
+
+  // Erro ao carregar imagem
+  onImageError(event: any): void {
+    event.target.style.display = 'none';
+  }
+
+  // Mostrar mensagem
+  private showMessage(message: string, type: 'success' | 'error' | 'warning'): void {
+    this.snackBar.open(message, 'Fechar', {
+      duration: 5000,
+      panelClass: [`snackbar-${type}`]
+    });
+  }
+
+  private getEvidenciaFotoPath(evidencia: EvidenciaDTO | null | undefined): string {
+    if (!evidencia) {
+      return '';
+    }
+    return evidencia.foto || evidencia.urlFoto || '';
+  }
+
+  private normalizeEvidencia(evidencia: EvidenciaDTO): EvidenciaDTO {
+    const ordem =
+      typeof evidencia.ordem === 'number'
+        ? evidencia.ordem
+        : (evidencia as any)?.indice ?? undefined;
+
+    const foto = this.getEvidenciaFotoPath(evidencia);
+
+    return {
+      ...evidencia,
+      foto,
+      ordem: typeof ordem === 'number' ? ordem : undefined
+    };
+  }
+
+  private sortEvidencias(evidencias: EvidenciaDTO[]): EvidenciaDTO[] {
+    return [...evidencias].sort((a, b) => {
+      const ordemA = typeof a.ordem === 'number' ? a.ordem : Number.MAX_SAFE_INTEGER;
+      const ordemB = typeof b.ordem === 'number' ? b.ordem : Number.MAX_SAFE_INTEGER;
+      if (ordemA !== ordemB) {
+        return ordemA - ordemB;
+      }
+      return (a.id ?? Number.MAX_SAFE_INTEGER) - (b.id ?? Number.MAX_SAFE_INTEGER);
+    });
+  }
+
+  private getParticipantesOrdenados(): PessoaPapelDTO[] {
+    if (!this.atividade || !Array.isArray(this.atividade.integrantes)) {
+      return [];
+    }
+
+    return [...this.atividade.integrantes].filter(Boolean);
+  }
+}

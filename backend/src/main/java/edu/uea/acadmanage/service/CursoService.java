@@ -1,0 +1,636 @@
+package edu.uea.acadmanage.service;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.transaction.Transactional;
+
+import edu.uea.acadmanage.DTO.CursoDTO;
+import edu.uea.acadmanage.DTO.PermissaoCursoDTO;
+import edu.uea.acadmanage.config.FileStorageProperties;
+import edu.uea.acadmanage.model.Curso;
+import edu.uea.acadmanage.model.TipoCurso;
+import edu.uea.acadmanage.model.Usuario;
+import edu.uea.acadmanage.repository.CursoRepository;
+import edu.uea.acadmanage.repository.UsuarioRepository;
+import edu.uea.acadmanage.service.exception.AcessoNegadoException;
+import edu.uea.acadmanage.service.exception.ArquivoInvalidoException;
+import edu.uea.acadmanage.service.exception.ConflitoException;
+import edu.uea.acadmanage.service.exception.CursoComAtividadesException;
+import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
+import edu.uea.acadmanage.service.exception.ValidacaoException;
+import edu.uea.acadmanage.model.AuditLog;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+@Service
+public class CursoService {
+
+    private final CursoRepository cursoRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final TipoCursoService tipoCursoService;
+    private final UnidadeAcademicaService unidadeAcademicaService;
+    private final AuditLogService auditLogService;
+    private final ObjectMapper objectMapper;
+    private final Path fileStorageLocation;
+    private final String baseStorageLocation;
+
+    public CursoService(
+        CursoRepository cursoRepository, 
+        UsuarioRepository usuarioRepository,
+        TipoCursoService tipoCursoService,
+        UnidadeAcademicaService unidadeAcademicaService,
+        AuditLogService auditLogService,
+        ObjectMapper objectMapper,
+        FileStorageProperties fileStorageProperties) throws IOException {
+        this.cursoRepository = cursoRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.tipoCursoService = tipoCursoService;
+        this.unidadeAcademicaService = unidadeAcademicaService;
+        this.auditLogService = auditLogService;
+        this.objectMapper = objectMapper;
+        this.baseStorageLocation = "fotos-capa";
+        this.fileStorageLocation = Paths.get(fileStorageProperties.getStorageLocation())
+                .resolve(this.baseStorageLocation)
+                .toAbsolutePath()
+                .normalize();
+        Files.createDirectories(this.fileStorageLocation);
+    }
+
+    // Método para buscar um curso por ID
+    @Cacheable(value = "cursos", key = "#cursoId")
+    public CursoDTO getCursoById(Long cursoId) {
+        return cursoRepository.findById(cursoId)
+                .map(this::toCursoDTO)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
+    }
+
+    // Método para buscar todos os curso
+    @Cacheable(value = "cursos", key = "'all'")
+    public List<CursoDTO> getAllCursos() {
+        return cursoRepository.findAll().stream()
+                .map(this::toCursoDTO)
+                .toList();
+    }
+
+    // Método para buscar todos os cursos com paginação
+    public Page<CursoDTO> getAllCursosPaginado(Pageable pageable) {
+        return cursoRepository.findAll(pageable)
+                .map(this::toCursoDTO);
+    }
+
+    // Método para buscar todos os cursos com paginação e filtro por status
+    public Page<CursoDTO> getAllCursosPaginadoComFiltro(Boolean ativo, Pageable pageable) {
+        Page<Curso> cursos = cursoRepository.findAllByFiltros(ativo, null, null, null, pageable);
+        return cursos.map(this::toCursoDTO);
+    }
+
+    // Método para buscar todos os cursos com paginação e filtros por status, nome e tipo
+    public Page<CursoDTO> getAllCursosPaginadoComFiltros(Boolean ativo, String nome, Long tipoId, Long unidadeAcademicaId, Pageable pageable) {
+        String nomeTratado = nome != null && !nome.trim().isEmpty() ? nome.trim() : null;
+        Page<Curso> cursos = cursoRepository.findAllByFiltros(ativo, nomeTratado, tipoId, unidadeAcademicaId, pageable);
+        return cursos.map(this::toCursoDTO);
+    }
+
+    // Método para buscar cursos associados a um usuário
+    public List<CursoDTO> getCursosByUsuarioId(Long usuarioId) {
+        // Verificar existência do usuário e buscar cursos em uma única operação
+        if (!usuarioRepository.existsById(usuarioId)) {
+            throw new RecursoNaoEncontradoException("Usuário não encontrado com o ID: " + usuarioId);
+        }
+
+        // Buscar cursos associados ao usuário
+        return cursoRepository.findCursosByUsuarioId(usuarioId).stream()
+                .map(this::toCursoDTO)
+                .toList();
+    }
+
+    // Método para buscar cursos associados a um usuário com paginação
+    public Page<CursoDTO> getCursosByUsuarioIdPaginado(Long usuarioId, Pageable pageable) {
+        // Verificar existência do usuário
+        if (!usuarioRepository.existsById(usuarioId)) {
+            throw new RecursoNaoEncontradoException("Usuário não encontrado com o ID: " + usuarioId);
+        }
+
+        // Buscar cursos associados ao usuário com paginação
+        return cursoRepository.findCursosByUsuarioIdPaginado(usuarioId, pageable)
+                .map(this::toCursoDTO);
+    }
+
+    // Método para buscar cursos associados a um usuário com paginação e filtros (status, nome, tipo)
+    public Page<CursoDTO> getCursosByUsuarioIdPaginadoComFiltros(Long usuarioId, Boolean ativo, String nome, Long tipoId, Long unidadeAcademicaId, Pageable pageable) {
+        // Verificar existência do usuário
+        if (!usuarioRepository.existsById(usuarioId)) {
+            throw new RecursoNaoEncontradoException("Usuário não encontrado com o ID: " + usuarioId);
+        }
+
+        // Tratar o nome: remover espaços para busca
+        String nomeTratado = null;
+        if (nome != null && !nome.trim().isEmpty() && !nome.trim().equalsIgnoreCase("sem filtro")) {
+            nomeTratado = nome.trim();
+        }
+        
+        try {
+            Page<Curso> cursos = cursoRepository.findByUsuarioAndFiltros(usuarioId, ativo, nomeTratado, tipoId, unidadeAcademicaId, pageable);
+            return cursos.map(this::toCursoDTO);
+        } catch (Exception e) {
+            // Se houver erro na query (ex: tabela vazia ou problema de tipo), retornar página vazia
+            // O handler de exceções já captura e retorna mensagem amigável
+            throw e;
+        }
+    }
+
+    // Método para buscar todos os usuários e suas permissões associados a um curso
+    public List<PermissaoCursoDTO> getAllUsuarioByCurso(Long cursoId, String username) {
+        // Buscar usuário logado
+        Usuario usuarioLogado = usuarioRepository.findByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + username));
+        
+        // Verificar se é ADMINISTRADOR
+        boolean isAdmin = usuarioLogado.getRoles().stream()
+                .anyMatch(role -> role.getNome().equals("ROLE_ADMINISTRADOR"));
+        
+        // Se NÃO for admin, verificar se tem acesso ao curso
+        if (!isAdmin && !verificarAcessoAoCurso(username, cursoId)) {
+            throw new RecursoNaoEncontradoException("Usuário não tem permissão para acessar este curso: " + cursoId);
+        }
+
+        // Buscar o curso
+        Curso curso = cursoRepository.findById(cursoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
+
+        // Retornar usuários do curso com tratamento seguro de roles
+        return curso.getUsuarios().stream()
+                .map(usuario -> new PermissaoCursoDTO(
+                        curso.getId(), 
+                        usuario.getId(), 
+                        usuario.getPessoa().getNome(), 
+                        getPrimaryRole(usuario)))
+                .toList();
+    }
+    
+    // Método auxiliar para obter a role principal do usuário de forma segura
+    private String getPrimaryRole(Usuario usuario) {
+        return usuario.getRoles().stream()
+                .map(role -> role.getNome())
+                .findFirst()
+                .orElse("SEM_ROLE");
+    }
+
+
+    @CacheEvict(value = "cursos", allEntries = true)
+    @Transactional
+    public CursoDTO saveCurso(CursoDTO cursoDTO, Usuario usuario) {
+        // Validar que o nome não seja nulo ou vazio
+        if (cursoDTO.nome() == null || cursoDTO.nome().trim().isEmpty()) {
+            throw new ValidacaoException("O nome do curso é obrigatório");
+        }
+        String nome = cursoDTO.nome().trim();
+        if (cursoRepository.existsByNomeIgnoreCase(nome)) {
+            throw new ConflitoException("Ja existe um curso cadastrado com este nome.");
+        }
+
+        // Criar uma entidade Curso a partir do DTO
+        Curso novoCurso = new Curso();
+        novoCurso.setNome(nome);
+        novoCurso.setDescricao(cursoDTO.descricao());
+        novoCurso.setFotoCapa(cursoDTO.fotoCapa());
+        novoCurso.setAtivo(cursoDTO.ativo() != null ? cursoDTO.ativo() : true);
+        if (cursoDTO.tipoId() == null) {
+            throw new ValidacaoException("O tipo do curso é obrigatório");
+        }
+        TipoCurso tipoCurso = tipoCursoService.recuperarPorId(cursoDTO.tipoId());
+        novoCurso.setTipoCurso(tipoCurso);
+
+        if (cursoDTO.unidadeAcademicaId() == null) {
+            throw new ValidacaoException("A unidade acadêmica é obrigatória");
+        }
+        novoCurso.setUnidadeAcademica(unidadeAcademicaService.buscarEntidade(cursoDTO.unidadeAcademicaId()));
+        Set<Usuario> usuarios = this.usuarioRepository.findAllByRoleName("ROLE_ADMINISTRADOR");
+        if (usuario != null && usuarios.stream().noneMatch(u -> Objects.equals(u.getId(), usuario.getId()))) {
+            usuarios.add(usuario);
+        }
+        novoCurso.setUsuarios(usuarios);
+
+        // Salvar no banco de dados
+        Curso cursoSalvo;
+        try {
+            cursoSalvo = cursoRepository.save(novoCurso);
+        } catch (DataIntegrityViolationException e) {
+            throw new ConflitoException("Nao foi possivel salvar o curso devido a dados duplicados ou relacoes invalidas.");
+        }
+
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.CREATE, 
+            "Curso", 
+            cursoSalvo.getId(), 
+            null, 
+            cursoSalvo, 
+            "Curso criado: " + cursoSalvo.getNome()
+        );
+
+        // Retornar um DTO com os dados do curso salvo
+        return toCursoDTO(cursoSalvo);
+    }
+
+    // Método para atualizar um curso
+    @CacheEvict(value = "cursos", key = "#cursoId", allEntries = true)
+    public CursoDTO updateCurso(Long cursoId, CursoDTO cursoDTO) {
+        // Validar que o nome não seja nulo ou vazio
+        if (cursoDTO.nome() == null || cursoDTO.nome().trim().isEmpty()) {
+            throw new ValidacaoException("O nome do curso é obrigatório");
+        }
+        
+        Curso cursoExistente = cursoRepository.findById(cursoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
+        
+        // Capturar estado antigo para audit log
+        Curso oldState = copyCursoForAudit(cursoExistente);
+        
+        // Atualizando os campos permitidos
+        cursoExistente.setNome(cursoDTO.nome());
+        cursoExistente.setDescricao(cursoDTO.descricao());
+        cursoExistente.setFotoCapa(cursoDTO.fotoCapa());
+        if (cursoDTO.tipoId() != null) {
+            TipoCurso tipoCurso = tipoCursoService.recuperarPorId(cursoDTO.tipoId());
+            cursoExistente.setTipoCurso(tipoCurso);
+        }
+        if (cursoDTO.unidadeAcademicaId() != null) {
+            cursoExistente.setUnidadeAcademica(unidadeAcademicaService.buscarEntidade(cursoDTO.unidadeAcademicaId()));
+        }
+        cursoExistente.setAtivo(cursoDTO.ativo());
+        // Salvando no banco
+        Curso cursoAtualizado = cursoRepository.save(cursoExistente);
+        
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.UPDATE, 
+            "Curso", 
+            cursoAtualizado.getId(), 
+            oldState, 
+            cursoAtualizado, 
+            "Curso atualizado: " + cursoAtualizado.getNome()
+        );
+        
+        return toCursoDTO(cursoAtualizado);
+    }
+
+    // Método para adicionar usuário a um curso
+    @Transactional
+    @CacheEvict(value = {"cursos", "usuarios"}, key = "#cursoId", allEntries = true)
+    public List<PermissaoCursoDTO> adicionarUsuarioCurso(Long cursoId, Long usuarioId) {
+        // Buscar curso
+        Curso cursoExistente = cursoRepository.findById(cursoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
+        
+        // Buscar usuário
+        Usuario usuarioExistente = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado com o ID: " + usuarioId));
+        
+        // Verificar se o usuário já está associado ao curso
+        if (cursoExistente.getUsuarios().contains(usuarioExistente)) {
+            throw new ConflitoException("O usuário já está associado a este curso.");
+        }
+        
+        // Adicionar usuário ao curso (lado owner)
+        cursoExistente.getUsuarios().add(usuarioExistente);
+        
+        // Adicionar curso ao usuário (lado inverse) - IMPORTANTE para relacionamento bidirecional
+        if (!usuarioExistente.getCursos().contains(cursoExistente)) {
+            usuarioExistente.getCursos().add(cursoExistente);
+        }
+        
+        // Salvar ambos os lados do relacionamento
+        cursoRepository.save(cursoExistente);
+        usuarioRepository.save(usuarioExistente);
+        
+        // Retornar lista atualizada de usuários do curso
+        return cursoExistente.getUsuarios().stream()
+                .map(usuario -> new PermissaoCursoDTO(
+                    cursoExistente.getId(), 
+                    usuario.getId(), 
+                    usuario.getPessoa().getNome(), 
+                    usuario.getRoles().iterator().next().getNome()))
+                .toList();
+    }
+
+    // Método para remover usuário de um curso
+    @Transactional
+    @CacheEvict(value = {"cursos", "usuarios"}, key = "#cursoId", allEntries = true)
+    public List<PermissaoCursoDTO> removerUsuarioCurso(Long cursoId, Long usuarioId, Long solicitanteId) {
+        // Buscar curso
+        Curso cursoExistente = cursoRepository.findById(cursoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
+        
+        // Buscar usuário
+        Usuario usuarioExistente = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado com o ID: " + usuarioId));
+
+        // Impedir que o próprio usuário remova sua permissão
+        if (usuarioId.equals(solicitanteId)) {
+            throw new ConflitoException("Você não pode remover sua própria permissão deste curso. Solicite a outro gerente ou administrador.");
+        }
+        
+        // Verificar se o usuário é ADMINISTRADOR (não pode ser removido)
+        boolean isAdmin = usuarioExistente.getRoles().stream()
+                .anyMatch(role -> role.getNome().equals("ROLE_ADMINISTRADOR"));
+        
+        if (isAdmin) {
+            throw new ConflitoException("Usuário administrador não pode ser removido do curso.");
+        }
+        
+        // Verificar se o usuário está realmente associado ao curso
+        if (!cursoExistente.getUsuarios().contains(usuarioExistente)) {
+            throw new ConflitoException("O usuário não está associado a este curso.");
+        }
+        
+        // Remover usuário do curso (lado owner)
+        cursoExistente.getUsuarios().remove(usuarioExistente);
+        
+        // Remover curso do usuário (lado inverse) - IMPORTANTE para relacionamento bidirecional
+        usuarioExistente.getCursos().remove(cursoExistente);
+        
+        // Salvar ambos os lados do relacionamento
+        cursoRepository.save(cursoExistente);
+        usuarioRepository.save(usuarioExistente);
+        
+        // Retornar lista atualizada de usuários do curso
+        return cursoExistente.getUsuarios().stream()
+                .map(usuario -> new PermissaoCursoDTO(
+                    cursoExistente.getId(), 
+                    usuario.getId(), 
+                    usuario.getPessoa().getNome(), 
+                    usuario.getRoles().iterator().next().getNome()))
+                .toList();
+    }
+
+        // Método para atualizar um curso
+    @CacheEvict(value = "cursos", key = "#cursoId", allEntries = true)
+    public CursoDTO updateStatusCurso(Long cursoId, Boolean ativo) {
+        Curso cursoExistente = cursoRepository.findById(cursoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
+        
+        // Capturar estado antigo para audit log
+        Curso oldState = copyCursoForAudit(cursoExistente);
+        
+        // Atualizando os campos permitidos
+        cursoExistente.setAtivo(ativo);
+        // Salvando no banco
+        Curso cursoAtualizado = cursoRepository.save(cursoExistente);
+        
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.UPDATE, 
+            "Curso", 
+            cursoAtualizado.getId(), 
+            oldState, 
+            cursoAtualizado, 
+            "Status do curso atualizado: " + cursoAtualizado.getNome() + " (ativo: " + ativo + ")"
+        );
+        
+        return toCursoDTO(cursoAtualizado);
+    }
+
+    // Método para excluir um curso
+    @Transactional
+    @CacheEvict(value = "cursos", key = "#cursoId", allEntries = true)
+    public void excluirCurso(Long cursoId) {
+        // Verificar se o curso existe
+        Curso curso = cursoRepository.findById(cursoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
+        
+        // Verificar se o curso tem atividades associadas
+        if (curso.getAtividades() != null && !curso.getAtividades().isEmpty()) {
+            throw new CursoComAtividadesException();
+        }
+        
+        // Capturar dados para audit log antes de deletar
+        String cursoNome = curso.getNome();
+        Long cursoIdValue = curso.getId();
+        
+        // Remover associações com usuários antes de deletar
+        List<Usuario> usuariosAssociados = new ArrayList<>(curso.getUsuarios());
+        for (Usuario usuario : usuariosAssociados) {
+            usuario.getCursos().remove(curso);
+        }
+        curso.getUsuarios().clear();
+        
+        // Tentar deletar o curso
+        try {
+            cursoRepository.delete(curso);
+            
+            // CAMADA 2: Audit Log
+            auditLogService.log(
+                AuditLog.AuditAction.DELETE, 
+                "Curso", 
+                cursoIdValue, 
+                curso, 
+                null, 
+                "Curso excluído: " + cursoNome
+            );
+        } catch (DataIntegrityViolationException e) {
+            throw new ConflitoException("Não é possível excluir o curso. Existem registros dependentes associados.");
+        }
+    }
+
+    // Método para verificar se um curso existe    
+    public boolean verificarSeCursoExiste(Long cursoId) {
+        return cursoRepository.existsById(cursoId);
+    }
+
+    // Método para verificar se um usuário tem acesso a um curso
+    public boolean verificarAcessoAoCurso(String email, Long cursoId) {
+        // Recupera o usuário do banco
+        Usuario usuario = this.usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + email));
+
+        // Verifica se o cursoId está na lista de cursos associados ao usuário
+        return usuario.getCursos().stream()
+                .anyMatch(curso -> curso.getId().equals(cursoId));
+    }
+
+    // Método para atualizar uma foto de capa
+    @CacheEvict(value = "cursos", key = "#cursoId", allEntries = true)
+    public CursoDTO atualizarFotoCapa(Long cursoId, MultipartFile file, String username) throws IOException {
+        // Verificar se o curso existe
+        Curso curso = cursoRepository.findById(cursoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
+
+        // Verificar se o usuário tem permissão para atualizar a foto de capa
+        if (!verificarAcessoAoCurso(username, cursoId)) {
+            throw new AcessoNegadoException("Usuário não tem permissão para atualizar a foto de capa deste curso.");
+        }
+
+        // Excluir foto anterior se existir
+        if (curso.getFotoCapa() != null && !curso.getFotoCapa().isEmpty()) {
+            excluirImagem(curso.getFotoCapa());
+        }
+
+        // Salvar nova foto
+        String fotoCapaPath = salvarImagem(curso, file);
+        curso.setFotoCapa(fotoCapaPath);
+
+        // Salvar curso atualizado
+        Curso cursoAtualizado = cursoRepository.save(curso);
+
+        return toCursoDTO(cursoAtualizado);
+    }
+
+    // Método para excluir uma foto de capa
+    @CacheEvict(value = "cursos", key = "#cursoId", allEntries = true)
+    public void excluirFotoCapa(Long cursoId, String username) {
+        Curso curso = cursoRepository.findById(cursoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
+
+        if (!verificarAcessoAoCurso(username, cursoId)) {
+            throw new AcessoNegadoException("Usuário não tem permissão para excluir a foto de capa deste curso.");
+        }
+
+        if (curso.getFotoCapa() == null || curso.getFotoCapa().isBlank()) {
+            throw new RecursoNaoEncontradoException("Foto de capa não encontrada para este curso.");
+        }
+
+        excluirImagem(curso.getFotoCapa());
+        curso.setFotoCapa(null);
+        cursoRepository.save(curso);
+    }
+
+    // Método para baixar uma foto de capa
+    public Resource downloadFotoCapa(Long cursoId, String username) throws IOException {
+        // Verificar se o curso existe
+        Curso curso = cursoRepository.findById(cursoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
+
+        // Verificar se o usuário tem permissão para baixar a foto de capa
+        if (!verificarAcessoAoCurso(username, cursoId)) {
+            throw new AcessoNegadoException("Usuário não tem permissão para baixar a foto de capa deste curso.");
+        }
+
+        if (curso.getFotoCapa() == null || curso.getFotoCapa().isEmpty()) {
+            throw new RecursoNaoEncontradoException("Foto de capa não encontrada para este curso.");
+        }
+
+        Path filePath = resolveFotoPath(curso.getFotoCapa());
+        Resource resource = new UrlResource(filePath.toUri());
+
+        if (resource.exists()) {
+            return resource;
+        } else {
+            throw new RecursoNaoEncontradoException("Arquivo não encontrado: " + curso.getFotoCapa());
+        }
+    }
+
+    // Método para validar se o arquivo é uma imagem válida
+    private Boolean validarImagem(MultipartFile file) {
+        // Verificar se o arquivo enviado é uma imagem JPG ou PNG
+        Set<String> allowedContentTypes = Set.of("image/jpg", "image/jpeg", "image/png");
+        if (!allowedContentTypes.contains(Objects.requireNonNullElse(file.getContentType(), "").toLowerCase())) {
+            throw new ArquivoInvalidoException("O arquivo enviado deve ser um JPG, JPEG ou PNG válido.");
+        }
+
+        return true;
+    }
+
+    // Método para salvar uma imagem
+    private String salvarImagem(Curso curso, MultipartFile file) throws IOException {
+        // Verificar se o arquivo enviado é uma imagem JPG ou PNG
+        validarImagem(file);
+
+        // Salvar a foto no diretório
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null) {
+            throw new ArquivoInvalidoException("O arquivo enviado não possui um nome válido.");
+        }
+        String fileExtension = originalFilename.substring(originalFilename.lastIndexOf('.'));
+        String uniqueFileName = curso.getId() + "/" + UUID.randomUUID().toString() + fileExtension;
+        Path targetLocation = this.fileStorageLocation.resolve(uniqueFileName).normalize();
+        Files.createDirectories(targetLocation.getParent());
+        Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+
+        return "/" + this.baseStorageLocation + "/" + uniqueFileName;
+    }
+
+    // Método para excluir uma imagem
+    private Boolean excluirImagem(String fileName) {
+        try {
+            Path targetLocation = resolveFotoPath(fileName);
+            Files.deleteIfExists(targetLocation);
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private Path resolveFotoPath(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            throw new ValidacaoException("Caminho da foto de capa inválido.");
+        }
+
+        Path candidate = Paths.get(fileName).normalize();
+        if (candidate.isAbsolute()) {
+            return candidate;
+        }
+
+        String normalized = fileName.replace("\\", "/");
+
+        if (normalized.startsWith("/")) {
+            normalized = normalized.substring(1);
+        }
+
+        String basePrefix = this.baseStorageLocation.replace("\\", "/");
+        if (normalized.startsWith(basePrefix + "/")) {
+            normalized = normalized.substring(basePrefix.length() + 1);
+        } else if (normalized.equals(basePrefix)) {
+            normalized = "";
+        }
+
+        return this.fileStorageLocation.resolve(normalized).normalize();
+    }
+
+    // Método auxiliar para copiar curso para audit log
+    private Curso copyCursoForAudit(Curso curso) {
+        try {
+            // Usar ObjectMapper para criar uma cópia profunda do objeto
+            String json = objectMapper.writeValueAsString(curso);
+            return objectMapper.readValue(json, Curso.class);
+        } catch (Exception e) {
+            // Se falhar a cópia profunda, criar manualmente uma cópia superficial
+            Curso copy = new Curso();
+            copy.setId(curso.getId());
+            copy.setNome(curso.getNome());
+            copy.setDescricao(curso.getDescricao());
+            copy.setFotoCapa(curso.getFotoCapa());
+            copy.setAtivo(curso.getAtivo());
+            copy.setTipoCurso(curso.getTipoCurso());
+            copy.setUnidadeAcademica(curso.getUnidadeAcademica());
+            return copy;
+        }
+    }
+
+    private CursoDTO toCursoDTO(Curso curso) {
+        Long tipoId = curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null;
+        Long unidadeId = curso.getUnidadeAcademica() != null ? curso.getUnidadeAcademica().getId() : null;
+        return new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), tipoId, unidadeId);
+    }
+
+}

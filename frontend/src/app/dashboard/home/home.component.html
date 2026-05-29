@@ -1,0 +1,210 @@
+<!-- Toolbar Principal -->
+<mat-toolbar class="header">
+  <!-- Botão Menu -->
+  <button
+    mat-icon-button
+    class="menu-button"
+    (click)="toggleSidebar()"
+    matTooltip="Menu"
+    matTooltipPosition="right"
+    aria-label="Toggle menu">
+    <mat-icon>{{ isCollapsed ? 'menu_open' : 'menu' }}</mat-icon>
+  </button>
+
+  <!-- Logo e Nome -->
+  <div class="header-brand">
+    <div class="header-logo">
+      <div class="logo-glow"></div>
+      <mat-icon class="logo-icon">school</mat-icon>
+    </div>
+    <div class="header-title">
+      <strong>Portifólium</strong>
+      <span class="header-subtitle">O portfólio do seu curso!</span>
+    </div>
+  </div>
+
+  <!-- Spacer -->
+  <span class="spacer"></span>
+
+  <!-- Informações do Usuário -->
+  <div class="user-info">
+    <!-- Avatar do Usuário -->
+    <div class="user-avatar-container">
+      <div class="user-avatar-circle">
+        <span class="user-initial">{{ getUserInitial() }}</span>
+      </div>
+      <div class="user-status-indicator"></div>
+    </div>
+
+    <!-- Menu do Usuário -->
+    <button
+      mat-button
+      class="user-menu-button"
+      [matMenuTriggerFor]="menu">
+      <div class="user-info-text">
+        <span class="user-name">{{ userName }}</span>
+        <span class="user-role-badge">{{ getUserRoleShort() }}</span>
+      </div>
+      <mat-icon class="dropdown-icon">expand_more</mat-icon>
+    </button>
+  </div>
+
+  <!-- Menu Dropdown -->
+  <mat-menu #menu="matMenu" class="user-dropdown">
+    <div class="menu-header">
+      <div class="menu-avatar-container">
+        <div class="menu-avatar-circle">
+          <span class="menu-user-initial">{{ getUserInitial() }}</span>
+        </div>
+        <div class="menu-status-indicator"></div>
+      </div>
+      <div class="menu-user-info">
+        <strong>{{ userName }}</strong>
+        <small>{{ userEmail }}</small>
+        <span class="user-role">{{ getUserRole() }}</span>
+      </div>
+    </div>
+    <mat-divider></mat-divider>
+    <button mat-menu-item (click)="goToProfile()">
+      <mat-icon>person</mat-icon>
+      <span>Meu Perfil</span>
+    </button>
+    <mat-divider></mat-divider>
+    <button mat-menu-item (click)="logout()" class="logout-item">
+      <mat-icon>logout</mat-icon>
+      <span>Sair</span>
+    </button>
+  </mat-menu>
+</mat-toolbar>
+
+<!-- Container Principal -->
+<mat-sidenav-container class="dashboard-container">
+  <!-- Barra Lateral -->
+  <mat-sidenav
+    #sidenav
+    mode="side"
+    [opened]="!isCollapsed"
+    class="sidenav"
+    [class.collapsed]="isCollapsed">
+
+    <!-- Lista de Navegação -->
+    <mat-nav-list class="nav-list">
+    <a
+      mat-list-item
+        [routerLink]="canAccess('DASHBOARD_VIEW') ? '/admin/dashboard' : null"
+        routerLinkActive="active-link"
+        [routerLinkActiveOptions]="{exact: true}"
+        matRipple
+        class="nav-item"
+        [disabled]="!canAccess('DASHBOARD_VIEW')">
+        <mat-icon class="nav-icon">dashboard</mat-icon>
+        <span class="nav-text" *ngIf="!isCollapsed">Dashboard</span>
+        <div class="active-indicator" *ngIf="!isCollapsed"></div>
+      </a>
+
+    <a
+      mat-list-item
+        [routerLink]="canAccess('COURSE_CREATE') || canAccess('COURSE_EDIT') || canAccess('COURSE_DELETE') || canAccess('COURSE_MANAGE_PERMISSIONS') || canAccess('COURSE_REPORT') ? '/admin/cursos' : null"
+        routerLinkActive="active-link"
+        matRipple
+        class="nav-item"
+        [disabled]="!(canAccess('COURSE_CREATE') || canAccess('COURSE_EDIT') || canAccess('COURSE_DELETE') || canAccess('COURSE_MANAGE_PERMISSIONS') || canAccess('COURSE_REPORT'))">
+        <mat-icon class="nav-icon">school</mat-icon>
+        <span class="nav-text" *ngIf="!isCollapsed">Cursos</span>
+        <div class="active-indicator" *ngIf="!isCollapsed"></div>
+      </a>
+
+    <a
+      mat-list-item
+        [routerLink]="canAccess('CATEGORY_MANAGE') ? '/admin/categorias' : null"
+        routerLinkActive="active-link"
+        matRipple
+        class="nav-item"
+        [disabled]="!canAccess('CATEGORY_MANAGE')">
+        <mat-icon class="nav-icon">category</mat-icon>
+        <span class="nav-text" *ngIf="!isCollapsed">Tipos de Atividades</span>
+        <div class="active-indicator" *ngIf="!isCollapsed"></div>
+      </a>
+
+    <a
+      mat-list-item
+        [routerLink]="canAccess('TIPO_CURSO_MANAGE') ? '/admin/tipos-curso' : null"
+        routerLinkActive="active-link"
+        matRipple
+        class="nav-item"
+        [disabled]="!canAccess('TIPO_CURSO_MANAGE')">
+        <mat-icon class="nav-icon">style</mat-icon>
+        <span class="nav-text" *ngIf="!isCollapsed">Tipos de Cursos</span>
+        <div class="active-indicator" *ngIf="!isCollapsed"></div>
+      </a>
+
+    <a
+      mat-list-item
+        [routerLink]="canAccess('UNIT_CREATE') || canAccess('UNIT_EDIT') || canAccess('UNIT_DELETE') ? '/admin/unidades-academicas' : null"
+        routerLinkActive="active-link"
+        matRipple
+        class="nav-item"
+        [disabled]="!(canAccess('UNIT_CREATE') || canAccess('UNIT_EDIT') || canAccess('UNIT_DELETE'))">
+        <mat-icon class="nav-icon">apartment</mat-icon>
+        <span class="nav-text" *ngIf="!isCollapsed">Unidades Acadêmicas</span>
+        <div class="active-indicator" *ngIf="!isCollapsed"></div>
+      </a>
+
+    <a
+      mat-list-item
+        [routerLink]="canAccess('USER_CREATE') ? '/admin/usuarios' : null"
+        routerLinkActive="active-link"
+        matRipple
+        class="nav-item"
+        [disabled]="!canAccess('USER_CREATE')">
+        <mat-icon class="nav-icon">group</mat-icon>
+        <span class="nav-text" *ngIf="!isCollapsed">Usuários</span>
+        <div class="active-indicator" *ngIf="!isCollapsed"></div>
+      </a>
+
+    <a
+      mat-list-item
+        [routerLink]="canAccess('PERSON_CREATE') || canAccess('PERSON_EDIT') || canAccess('PERSON_DELETE') || canAccess('PERSON_IMPORT') ? '/admin/pessoas' : null"
+        routerLinkActive="active-link"
+        matRipple
+        class="nav-item"
+        [disabled]="!(canAccess('PERSON_CREATE') || canAccess('PERSON_EDIT') || canAccess('PERSON_DELETE') || canAccess('PERSON_IMPORT'))">
+        <mat-icon class="nav-icon">badge</mat-icon>
+        <span class="nav-text" *ngIf="!isCollapsed">Pessoas</span>
+        <div class="active-indicator" *ngIf="!isCollapsed"></div>
+      </a>
+
+    <a
+      mat-list-item
+        [routerLink]="canAccess('AUDIT_LOG_VIEW') ? '/admin/auditoria' : null"
+        routerLinkActive="active-link"
+        matRipple
+        class="nav-item"
+        [disabled]="!canAccess('AUDIT_LOG_VIEW')">
+        <mat-icon class="nav-icon">security</mat-icon>
+        <span class="nav-text" *ngIf="!isCollapsed">Auditoria</span>
+        <div class="active-indicator" *ngIf="!isCollapsed"></div>
+      </a>
+
+      <mat-divider class="nav-divider"></mat-divider>
+
+    <a
+      mat-list-item
+        routerLink="/admin/sobre"
+        routerLinkActive="active-link"
+        matRipple
+        class="nav-item">
+        <mat-icon class="nav-icon">info</mat-icon>
+        <span class="nav-text" *ngIf="!isCollapsed">Sobre</span>
+        <div class="active-indicator" *ngIf="!isCollapsed"></div>
+      </a>
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <!-- Conteúdo Principal -->
+  <mat-sidenav-content class="main-content">
+    <div class="content">
+      <router-outlet />
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

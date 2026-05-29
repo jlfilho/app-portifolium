@@ -1,0 +1,159 @@
+package edu.uea.acadmanage.controller;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import edu.uea.acadmanage.DTO.AuthorityCheckDTO;
+import edu.uea.acadmanage.DTO.PasswordChangeRequest;
+import edu.uea.acadmanage.DTO.UsuarioDTO;
+import edu.uea.acadmanage.DTO.UsuarioPessoaRequestDTO;
+import edu.uea.acadmanage.service.UsuarioService;
+
+@RestController
+@RequestMapping("/api/usuarios")
+public class UsuarioController {
+    private final UsuarioService usuarioService;
+
+    public UsuarioController(UsuarioService usuarioService) {
+        this.usuarioService = usuarioService;
+    }
+
+    // Método para verificar as autoridades do usuário autenticado
+    @GetMapping("/checkAuthorities")
+    public ResponseEntity<AuthorityCheckDTO> checkAuthorities() {
+        // Obtém o contexto de segurança atual
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // Coleta as authorities atribuídas ao usuário autenticado
+        List<String> authorities = authentication.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .toList();
+
+        AuthorityCheckDTO response = new AuthorityCheckDTO(
+            authentication.getName(),
+            authorities
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+    // Método para listar todos os usuários com paginação e filtro por nome
+    @GetMapping
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
+    public ResponseEntity<Page<UsuarioDTO>> listarUsuarios(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "pessoa.nome") String sortBy,
+            @RequestParam(defaultValue = "ASC") String direction,
+            @RequestParam(required = false) String nome) {
+        
+        // Mapear campos do frontend para campos da entidade
+        // Se o frontend enviar "nome", mapear para "pessoa.nome"
+        if ("nome".equals(sortBy)) {
+            sortBy = "pessoa.nome";
+        } else if ("email".equals(sortBy)) {
+            sortBy = "email";
+        } else if ("cpf".equals(sortBy)) {
+            sortBy = "pessoa.cpf";
+        } else if ("id".equals(sortBy)) {
+            sortBy = "id";
+        }
+        // Se já for "pessoa.nome" ou outro campo válido, manter como está
+        
+        Sort.Direction sortDirection = direction.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        
+        Page<UsuarioDTO> usuarios = usuarioService.getAllUsuariosPaginadosComFiltro(nome, pageable);
+        
+        if (usuarios.isEmpty()) {
+            return ResponseEntity.noContent().build(); // Retorna 204 No Content se não houver usuários
+        }
+        return ResponseEntity.ok(usuarios); // Retorna 200 OK com a página de usuários
+    }
+
+    // Método para buscar um único usuário por ID
+    @GetMapping("/{usuarioId}")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
+    public ResponseEntity<UsuarioDTO> getUsuarioById(@PathVariable Long usuarioId) {
+        UsuarioDTO usuario = usuarioService.getUsuarioById(usuarioId);
+        return ResponseEntity.ok(usuario);
+    }
+
+    @GetMapping("/email")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
+    public ResponseEntity<UsuarioDTO> getUsuarioByEmail(@RequestParam String email) {
+        UsuarioDTO usuario = usuarioService.getUsuarioByEmailAsDTO(email);
+        return ResponseEntity.ok(usuario);
+    }
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<UsuarioDTO> criarUsuario(@Validated @RequestBody UsuarioDTO usuario) {
+        UsuarioDTO novoUsuario = usuarioService.save(usuario);
+        return ResponseEntity.status(201).body(novoUsuario); // 201 Created
+    }
+
+    @PostMapping("/pessoa")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<UsuarioDTO> criarUsuarioParaPessoa(
+            @Validated @RequestBody UsuarioPessoaRequestDTO request) {
+        UsuarioDTO novoUsuario = usuarioService.criarUsuarioParaPessoa(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(novoUsuario);
+    }
+
+    @PutMapping("/{usuarioId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UsuarioDTO> atualizarUsuario(
+            @PathVariable Long usuarioId, 
+            @Validated @RequestBody UsuarioDTO usuario,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        UsuarioDTO novoUsuario = usuarioService.update(usuarioId, usuario, userDetails.getUsername());
+        return ResponseEntity.ok(novoUsuario);  
+    }
+
+    
+    @PutMapping("/{usuarioId}/change-password")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<Map<String, String>> changePassword(
+            @PathVariable Long usuarioId,
+            @RequestBody @Validated PasswordChangeRequest passwordChangeRequest,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        usuarioService.changePassword(usuarioId, passwordChangeRequest, userDetails.getUsername());
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Senha alterada com sucesso");
+        response.put("usuarioId", usuarioId.toString());
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{usuarioId}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')") // Apenas administradores podem excluir usuários
+    public ResponseEntity<Void> deleteUsuario(@PathVariable Long usuarioId) {
+            usuarioService.deleteUsuario(usuarioId);
+            return ResponseEntity.ok().build();
+    }
+    
+}

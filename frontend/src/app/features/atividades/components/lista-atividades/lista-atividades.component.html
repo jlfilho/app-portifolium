@@ -1,0 +1,257 @@
+<mat-card class="form-card" appearance="outlined">
+  <mat-card-header>
+    <div class="header-content">
+      <div class="header-text">
+        <mat-card-title>
+          <mat-icon class="title-icon">event</mat-icon>
+          Atividades do Curso
+        </mat-card-title>
+        <mat-card-subtitle *ngIf="cursoNome">{{ cursoNome }}</mat-card-subtitle>
+      </div>
+      <div class="header-actions">
+        <button
+          mat-stroked-button
+          color="primary"
+          class="btn-relatorio app-button-report"
+          (click)="abrirDialogRelatorio()"
+          [disabled]="isLoading || isGeneratingRelatorio || !podeGerarRelatorio">
+          <mat-progress-spinner
+            *ngIf="isGeneratingRelatorio"
+            diameter="18"
+            mode="indeterminate">
+          </mat-progress-spinner>
+          <mat-icon *ngIf="!isGeneratingRelatorio">picture_as_pdf</mat-icon>
+          <span>{{ isGeneratingRelatorio ? 'Gerando...' : 'Relatório PDF' }}</span>
+        </button>
+
+        <button 
+          mat-raised-button 
+          color="primary" 
+          (click)="novaAtividade()" 
+          class="btn-nova-atividade app-button-primary"
+          [disabled]="!podeCriarAtividade">
+          <mat-icon>add</mat-icon>
+          Nova Atividade
+        </button>
+      </div>
+    </div>
+  </mat-card-header>
+
+  <mat-card-content>
+    <!-- Filtros -->
+    <div class="filters-section">
+      <h3 class="filters-title">
+        <mat-icon>filter_list</mat-icon>
+        Filtros
+      </h3>
+
+      <div class="filters-grid">
+        <!-- Filtro por Nome -->
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Nome da Atividade</mat-label>
+          <input matInput [(ngModel)]="filtroNome" placeholder="Digite parte do nome...">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+
+        <!-- Filtro por Categoria -->
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Categoria</mat-label>
+          <mat-select [(ngModel)]="filtroCategoriaId">
+            <mat-option [value]="null">Todas</mat-option>
+            <mat-option *ngFor="let categoria of categorias" [value]="categoria.id">
+              {{ categoria.nome }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>category</mat-icon>
+        </mat-form-field>
+
+        <!-- Filtro por Status de Publicação -->
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Status de Publicação</mat-label>
+          <mat-select [(ngModel)]="filtroStatusPublicacao">
+            <mat-option *ngFor="let status of statusOptions" [value]="status.value">
+              {{ status.label }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>publish</mat-icon>
+        </mat-form-field>
+
+        <!-- Filtro por Data Início -->
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Data Início</mat-label>
+          <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="filtroDataInicio" [ngModelOptions]="{standalone: true}">
+          <mat-datepicker-toggle matSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+          <mat-datepicker #pickerInicio></mat-datepicker>
+          <mat-icon matPrefix>event</mat-icon>
+        </mat-form-field>
+
+        <!-- Filtro por Data Fim -->
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Data Fim</mat-label>
+          <input matInput [matDatepicker]="pickerFim" [(ngModel)]="filtroDataFim" [ngModelOptions]="{standalone: true}">
+          <mat-datepicker-toggle matSuffix [for]="pickerFim"></mat-datepicker-toggle>
+          <mat-datepicker #pickerFim></mat-datepicker>
+          <mat-icon matPrefix>event</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <!-- Botões de Ação dos Filtros -->
+      <div class="filters-actions">
+        <button mat-raised-button color="primary" class="app-button-primary" (click)="aplicarFiltros()" [disabled]="isLoading">
+          <mat-icon>search</mat-icon>
+          Buscar
+        </button>
+        <button mat-stroked-button class="app-button-secondary" (click)="limparFiltros()" [disabled]="isLoading">
+          <mat-icon>clear</mat-icon>
+          Limpar Filtros
+        </button>
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <div class="stats-row" *ngIf="!isLoading">
+      <span>Total de atividades: <strong>{{ totalElements }}</strong></span>
+      <span *ngIf="atividades.length > 0">Exibindo: <strong>{{ atividades.length }}</strong> de <strong>{{ totalElements }}</strong></span>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <div class="atividades-list" *ngIf="!isLoading; else loadingTpl">
+      <div class="empty" *ngIf="atividades.length === 0">
+        <mat-icon class="empty-icon">event_busy</mat-icon>
+        <p>{{ emptyMessage }}</p>
+      </div>
+
+      <!-- Grid de Cards de Atividades -->
+      <div class="atividades-grid" *ngIf="atividades.length > 0">
+        <mat-card *ngFor="let atividade of atividades; trackBy: trackByAtividadeId" class="atividade-card" appearance="outlined">
+          <!-- Foto de Capa -->
+          <img
+            *ngIf="atividade.fotoCapa"
+            mat-card-image
+            [src]="getImageUrl(atividade.fotoCapa)"
+            [alt]="'Foto de capa de ' + atividade.nome"
+            class="card-image"
+            (error)="onImageError($event)"
+            (load)="onImageLoad($event)">
+
+          <!-- Placeholder se não houver foto -->
+          <div *ngIf="!atividade.fotoCapa" class="card-image-placeholder">
+            <mat-icon>event</mat-icon>
+          </div>
+
+          <mat-card-content>
+            <!-- Título -->
+            <div class="card-header">
+              <h3 class="atividade-nome">{{ atividade.nome }}</h3>
+            </div>
+
+            <!-- Status -->
+            <div class="card-status">
+              <mat-chip
+                [class.chip-publicada]="atividade.statusPublicacao"
+                [class.chip-nao-publicada]="!atividade.statusPublicacao"
+                class="status-chip">
+                <mat-icon class="chip-icon">
+                  {{ atividade.statusPublicacao ? 'check_circle' : 'unpublished' }}
+                </mat-icon>
+                {{ atividade.statusPublicacao ? 'Publicada' : 'Não Publicada' }}
+              </mat-chip>
+            </div>
+
+            <!-- Informações Resumidas -->
+            <div class="card-info-resumido">
+              <div class="info-row">
+                <mat-icon class="info-icon">event</mat-icon>
+                <span class="info-text">{{ formatarDataAtividade(atividade) }}</span>
+              </div>
+
+              <div class="info-row">
+                <mat-icon class="info-icon">category</mat-icon>
+                <span class="info-text">{{ atividade.categoria.nome }}</span>
+              </div>
+
+              <div class="info-row">
+                <mat-icon class="info-icon">person</mat-icon>
+                <span class="info-text">{{ atividade.coordenador || 'Sem coordenador' }}</span>
+              </div>
+
+              <div class="info-row" *ngIf="getParticipantesCount(atividade) > 0">
+                <mat-icon class="info-icon">people</mat-icon>
+                <span class="info-text">{{ getParticipantesCount(atividade) }} participante(s)</span>
+              </div>
+
+              <div class="info-row" *ngIf="atividade.fontesFinanciadora.length > 0">
+                <mat-icon class="info-icon">attach_money</mat-icon>
+                <span class="info-text">{{ atividade.fontesFinanciadora.length }} fonte(s) financiadora(s)</span>
+              </div>
+
+              <div class="info-row">
+                <mat-icon class="info-icon">photo_library</mat-icon>
+                <span class="info-text">{{ getEvidenciasCount(atividade) }} evidência(s)</span>
+              </div>
+            </div>
+          </mat-card-content>
+
+          <!-- Ações do Card -->
+          <mat-card-actions class="card-actions">
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="visualizarAtividade(atividade)"
+              class="btn-visualizar app-button-primary"
+              [disabled]="isLoading">
+              <mat-icon>visibility</mat-icon>
+              Visualizar
+            </button>
+            <button
+              mat-stroked-button
+              color="primary"
+              (click)="editarAtividade(atividade)"
+              class="btn-editar app-button-secondary"
+              [disabled]="isLoading || !podeEditarAtividade(atividade)">
+              <mat-icon>edit</mat-icon>
+              Editar
+            </button>
+            <button
+              mat-stroked-button
+              color="warn"
+              (click)="confirmarExclusao(atividade)"
+              class="btn-excluir app-button-danger"
+              [disabled]="isLoading || !podeExcluirAtividade(atividade)">
+              <mat-icon>delete</mat-icon>
+              Excluir
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+    </div>
+
+    <ng-template #loadingTpl>
+      <div class="loading">
+        <mat-progress-spinner mode="indeterminate" diameter="28"></mat-progress-spinner>
+        <span>Carregando atividades...</span>
+      </div>
+    </ng-template>
+
+    <!-- Paginação -->
+    <mat-paginator
+      *ngIf="!isLoading && atividades.length > 0"
+      [length]="totalElements"
+      [pageSize]="pageSize"
+      [pageIndex]="pageIndex"
+      [pageSizeOptions]="pageSizeOptions"
+      (page)="onPageChange($event)"
+      showFirstLastButtons>
+    </mat-paginator>
+  </mat-card-content>
+
+  <mat-card-actions align="end">
+    <button mat-stroked-button class="app-button-secondary" (click)="back()">
+      <mat-icon>arrow_back</mat-icon>
+      Cancelar
+    </button>
+  </mat-card-actions>
+</mat-card>
+

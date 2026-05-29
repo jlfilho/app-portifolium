@@ -1,0 +1,285 @@
+<div class="form-container">
+  <mat-card class="form-card">
+    <mat-card-header>
+      <div class="header-content">
+        <div class="header-icon">
+          <mat-icon>{{ isEditMode ? 'edit' : 'add_circle_outline' }}</mat-icon>
+        </div>
+        <div>
+          <mat-card-title>
+            {{ isEditMode ? 'Editar Curso' : 'Cadastrar Novo Curso' }}
+          </mat-card-title>
+          <mat-card-subtitle>
+            {{ isEditMode ? 'Atualize as informações do curso' : 'Preencha os dados para criar um novo curso' }}
+          </mat-card-subtitle>
+        </div>
+      </div>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Loading Spinner -->
+      <div *ngIf="isLoading" class="loading-container">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>Carregando...</p>
+      </div>
+
+      <!-- Formulário -->
+      <form [formGroup]="cursoForm" (ngSubmit)="onSubmit()" *ngIf="!isLoading">
+        <div class="form-row">
+          <!-- Nome do Curso -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nome do Curso</mat-label>
+            <mat-icon matPrefix>school</mat-icon>
+            <input
+              matInput
+              formControlName="nome"
+              maxlength="100"
+              autofocus>
+            <mat-hint align="end">{{ nome?.value?.length || 0 }}/100</mat-hint>
+            <mat-error *ngIf="nome?.hasError('required')">
+              Nome é obrigatório
+            </mat-error>
+            <mat-error *ngIf="nome?.hasError('minlength')">
+              Nome deve ter pelo menos 3 caracteres
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <!-- Tipo de Curso -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Tipo de Curso</mat-label>
+            <mat-icon matPrefix>category</mat-icon>
+            <mat-select formControlName="tipoId" [disabled]="isLoadingTipos" placeholder="Selecione o tipo">
+              <mat-option *ngIf="isLoadingTipos" [value]="null" disabled>Carregando tipos...</mat-option>
+              <mat-option *ngFor="let tc of tiposCurso" [value]="tc.id">
+                {{ tc.nome }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="tipoId?.hasError('required')">Tipo é obrigatório</mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <!-- Unidade Acadêmica -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Unidade Acadêmica</mat-label>
+            <mat-icon matPrefix>apartment</mat-icon>
+            <input
+              matInput
+              [formControl]="unidadeAcademicaSearchCtrl"
+              [matAutocomplete]="autoUnidades"
+              placeholder="Digite para buscar a unidade acadêmica">
+            <button
+              mat-icon-button
+              matSuffix
+              *ngIf="unidadeAcademicaSearchCtrl.value"
+              (click)="clearUnidadeSelection()"
+              matTooltip="Limpar seleção">
+              <mat-icon>close</mat-icon>
+            </button>
+            <mat-error *ngIf="unidadeAcademicaId?.hasError('required')">
+              Unidade acadêmica é obrigatória
+            </mat-error>
+            <mat-hint *ngIf="selectedUnidadeAcademica">
+              Selecionada: {{ selectedUnidadeAcademica!.nome }}
+            </mat-hint>
+          </mat-form-field>
+
+          <mat-autocomplete
+            #autoUnidades="matAutocomplete"
+            (optionSelected)="onUnidadeSelected($event)">
+            <mat-option *ngIf="isLoadingUnidades" [value]="null" disabled>
+              <mat-icon class="option-loading-icon">sync</mat-icon>
+              Buscando unidades...
+            </mat-option>
+            <ng-container *ngIf="!isLoadingUnidades">
+              <mat-option
+                *ngFor="let unidade of unidadesAcademicas"
+                [value]="unidade">
+                {{ unidade.nome }}
+              </mat-option>
+              <mat-option *ngIf="unidadesAcademicas.length === 0" [value]="null" disabled>
+                Nenhuma unidade encontrada
+              </mat-option>
+            </ng-container>
+          </mat-autocomplete>
+        </div>
+
+        <div class="form-row">
+          <!-- Descrição do Curso -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Descrição do Curso</mat-label>
+            <mat-icon matPrefix>description</mat-icon>
+            <textarea
+              matInput
+              formControlName="descricao"
+              maxlength="500"
+              rows="4"
+              placeholder="Descreva o objetivo e conteúdo do curso...">
+            </textarea>
+            <mat-hint align="end">{{ descricao?.value?.length || 0 }}/500</mat-hint>
+            <mat-error *ngIf="descricao?.hasError('maxlength')">
+              Descrição deve ter no máximo 500 caracteres
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <!-- Status Ativo -->
+          <div class="toggle-container">
+            <mat-slide-toggle
+              formControlName="ativo"
+              color="primary">
+              <div class="toggle-content">
+                <mat-icon>{{ cursoForm.get('ativo')?.value ? 'visibility' : 'visibility_off' }}</mat-icon>
+                <span class="toggle-label">
+                  {{ cursoForm.get('ativo')?.value ? 'Curso Ativo' : 'Curso Inativo' }}
+                </span>
+              </div>
+            </mat-slide-toggle>
+            <mat-hint class="toggle-hint">
+              {{ cursoForm.get('ativo')?.value ? 'Visível para o público' : 'Oculto para o público' }}
+            </mat-hint>
+          </div>
+        </div>
+
+        <!-- Upload de Foto de Capa -->
+        <div class="form-row" *ngIf="isEditMode">
+          <div class="cover-section">
+            <h3>
+              <mat-icon>image</mat-icon>
+              Foto de Capa do Curso
+            </h3>
+
+            <div
+              class="cover-dropzone"
+              [class.drag-over]="isDragOver"
+              (dragover)="onDragOver($event)"
+              (dragleave)="onDragLeave($event)"
+              (drop)="onDrop($event)"
+              (click)="fileInput.click()">
+
+              <div class="cover-preview" *ngIf="(previewUrl || currentCoverUrl); else placeholder">
+                <img [src]="previewUrl || currentCoverUrl" alt="Preview da capa do curso">
+              </div>
+
+              <ng-template #placeholder>
+                <div class="cover-placeholder">
+                  <mat-icon>add_photo_alternate</mat-icon>
+                  <p>Clique ou arraste uma imagem aqui</p>
+                  <span>Formatos: JPG, PNG, GIF ou WEBP. Máx: 5MB.</span>
+                </div>
+              </ng-template>
+
+              <input
+                type="file"
+                #fileInput
+                accept="image/png, image/jpeg, image/gif, image/webp"
+                (change)="onFileSelected($event)"
+                hidden>
+            </div>
+
+            <div class="cover-actions" *ngIf="selectedFile">
+              <div class="file-info">
+                <mat-icon>insert_photo</mat-icon>
+                <div>
+                  <span class="file-name">{{ selectedFile.name }}</span>
+                  <small>{{ (selectedFile.size / 1024 | number: '1.0-0') }} KB</small>
+                </div>
+              </div>
+
+              <div class="cover-buttons">
+                <button
+                  mat-stroked-button
+                  type="button"
+                  color="primary"
+                  (click)="removeSelectedFile()"
+                  [disabled]="isUploadingCover || !canManageCover()">
+                  <mat-icon>close</mat-icon>
+                  Cancelar
+                </button>
+
+                <button
+                  mat-raised-button
+                  color="primary"
+                  type="button"
+                  (click)="uploadCover()"
+                  [disabled]="isUploadingCover || !cursoId || !canManageCover()">
+                  <mat-icon *ngIf="!isUploadingCover">cloud_upload</mat-icon>
+                  <mat-progress-spinner
+                    *ngIf="isUploadingCover"
+                    diameter="18"
+                    mode="indeterminate">
+                  </mat-progress-spinner>
+                  {{ isUploadingCover ? 'Enviando...' : 'Enviar Capa' }}
+                </button>
+              </div>
+            </div>
+
+            <div class="cover-hint" *ngIf="!selectedFile && currentCoverUrl">
+              <mat-icon>info</mat-icon>
+              <span>Atual imagem em uso. Clique na área acima para selecionar uma nova capa.</span>
+            </div>
+
+          <div class="cover-actions" *ngIf="currentCoverUrl">
+            <button
+              mat-stroked-button
+              type="button"
+              color="warn"
+              (click)="confirmDeleteCover()"
+              [disabled]="isUploadingCover || !canManageCover()">
+              <mat-icon>delete</mat-icon>
+              Remover capa atual
+            </button>
+          </div>
+          </div>
+        </div>
+
+        <!-- Informações adicionais -->
+        <div class="info-box" *ngIf="!isEditMode">
+          <mat-icon>info</mat-icon>
+          <div>
+            <strong>Dica:</strong> Após criar o curso, você poderá adicionar atividades,
+            gerenciar permissões e publicar o conteúdo para os alunos.
+          </div>
+        </div>
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions align="end" *ngIf="!isLoading">
+      <button
+        mat-stroked-button
+        class="app-button-secondary"
+        type="button"
+        (click)="onReset()"
+        [disabled]="isSaving"
+        matTooltip="Limpar formulário">
+        <mat-icon>refresh</mat-icon>
+        Limpar
+      </button>
+
+      <button
+        mat-stroked-button
+        class="app-button-secondary"
+        type="button"
+        (click)="onCancel()"
+        [disabled]="isSaving">
+        <mat-icon>close</mat-icon>
+        Cancelar
+      </button>
+
+      <button
+        mat-raised-button
+        color="primary"
+        class="btn-primary app-button-primary"
+        type="button"
+        (click)="onSubmit()"
+        [disabled]="isSaving || !isFormValid() || !canSubmit()"
+        matTooltip="Salvar curso">
+        <mat-icon>{{ isSaving ? 'hourglass_empty' : (isEditMode ? 'save' : 'add') }}</mat-icon>
+        {{ isSaving ? 'Salvando...' : (isEditMode ? 'Atualizar' : 'Cadastrar') }}
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

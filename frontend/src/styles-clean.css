@@ -1,0 +1,217 @@
+/* ============================================
+   IMPORTS
+   ============================================ */
+@import './styles/variables.css';
+
+/* ============================================
+   ESTILOS GLOBAIS - MINIMAL TECH LIGHT+
+   ============================================ */
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-dark);
+}
+
+/* ============================================
+   VARIÁVEIS DO TEMA MATERIAL
+   ============================================ */
+
+:root {
+  /* Cores do tema */
+  --mdc-theme-primary: #3B82F6 !important;
+  --mdc-theme-secondary: #8B5CF6 !important;
+  --mdc-theme-surface: #FFFFFF !important;
+  --mdc-theme-background: #F8FAFC !important;
+  --mdc-theme-on-primary: #FFFFFF !important;
+  --mdc-theme-on-secondary: #FFFFFF !important;
+  --mdc-theme-on-surface: #0F172A !important;
+  --mdc-theme-on-background: #0F172A !important;
+  --mdc-theme-error: #EF4444 !important;
+  --mdc-theme-on-error: #FFFFFF !important;
+}
+
+/* ============================================
+   SNACKBAR
+   ============================================ */
+
+.snackbar-success {
+  --mdc-snackbar-container-color: var(--success-color) !important;
+  --mat-mdc-snack-bar-button-color: white !important;
+  --mdc-snackbar-supporting-text-color: white !important;
+}
+
+.snackbar-error {
+  --mdc-snackbar-container-color: var(--error-color) !important;
+  --mat-mdc-snack-bar-button-color: white !important;
+  --mdc-snackbar-supporting-text-color: white !important;
+}
+
+.snackbar-warning {
+  --mdc-snackbar-container-color: var(--warning-color) !important;
+  --mat-mdc-snack-bar-button-color: white !important;
+  --mdc-snackbar-supporting-text-color: white !important;
+}
+
+.info-snackbar {
+  --mdc-snackbar-container-color: var(--info-color) !important;
+  --mat-mdc-snack-bar-button-color: white !important;
+  --mdc-snackbar-supporting-text-color: white !important;
+}
+
+/* ============================================
+   SCROLLBAR CUSTOMIZADA
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gradient-primary);
+  border-radius: var(--border-radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gradient-accent);
+}
+
+/* ============================================
+   CUSTOMIZAÇÕES ESSENCIAIS DO MATERIAL
+   ============================================ */
+
+/* Botões com Gradiente */
+::ng-deep .mat-mdc-raised-button.mat-primary {
+  background: var(--gradient-primary) !important;
+  color: white !important;
+}
+
+::ng-deep .mat-mdc-raised-button.mat-primary:hover {
+  background: var(--gradient-accent) !important;
+  box-shadow: var(--shadow-primary);
+}
+
+/* Tooltips */
+::ng-deep .mat-mdc-tooltip {
+  --mdc-plain-tooltip-container-color: var(--bg-dark) !important;
+  --mdc-plain-tooltip-supporting-text-color: var(--text-primary) !important;
+  border: none !important;
+  outline: none !important;
+}
+
+::ng-deep .mat-mdc-tooltip .mdc-tooltip__surface {
+  border: none !important;
+  outline: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Chips */
+::ng-deep .mat-mdc-chip.mat-primary {
+  --mdc-chip-elevated-container-color: var(--primary-color) !important;
+  --mdc-chip-label-text-color: white !important;
+}
+
+::ng-deep .mat-mdc-chip.mat-accent {
+  --mdc-chip-elevated-container-color: var(--secondary-color) !important;
+  --mdc-chip-label-text-color: white !important;
+}
+
+::ng-deep .mat-mdc-chip.mat-warn {
+  --mdc-chip-elevated-container-color: var(--error-color) !important;
+  --mdc-chip-label-text-color: white !important;
+}
+
+/* Menu */
+::ng-deep .mat-mdc-menu-panel {
+  --mat-menu-container-color: white !important;
+  background-color: white !important;
+}
+
+::ng-deep .mat-mdc-menu-panel .mat-mdc-menu-content {
+  background-color: white !important;
+}
+
+::ng-deep .mat-mdc-menu-panel .mdc-list {
+  background-color: white !important;
+}
+
+::ng-deep .mat-mdc-menu-item {
+  color: var(--text-dark) !important;
+}
+
+::ng-deep .mat-mdc-menu-item:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+::ng-deep .mat-mdc-menu-item .mat-icon {
+  color: var(--primary-color) !important;
+}
+
+/* Listas */
+::ng-deep .mat-mdc-list-base .mat-mdc-list-item .mat-icon {
+  color: var(--text-dark) !important;
+}
+
+::ng-deep .mat-mdc-list-base .mat-mdc-list-item .mdc-list-item__primary-text {
+  color: var(--text-dark) !important;
+}
+
+::ng-deep .mat-mdc-list-base .mat-mdc-list-item .mdc-list-item__secondary-text {
+  color: var(--text-secondary) !important;
+}
+
+::ng-deep .mat-mdc-list-base .mat-mdc-list-item:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+/* Ripple Effect */
+::ng-deep .mat-ripple-element {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* ============================================
+   ANIMAÇÕES GLOBAIS
+   ============================================ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animações com preferência de movimento reduzido */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+

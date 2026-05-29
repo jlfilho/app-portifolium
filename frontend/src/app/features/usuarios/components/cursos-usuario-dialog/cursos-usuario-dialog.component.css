@@ -1,0 +1,446 @@
+.dialog-container {
+  min-width: 500px;
+  max-width: 700px;
+  padding: 0;
+  background-color: var(--bg-card) !important;
+}
+
+/* Forçar fundo branco em todo o dialog */
+::ng-deep .cursos-dialog-panel .mat-mdc-dialog-container {
+  background-color: var(--bg-card) !important;
+}
+
+::ng-deep .cursos-dialog-panel .mat-mdc-dialog-surface {
+  background-color: var(--bg-card) !important;
+}
+
+/* Header */
+.dialog-header {
+  background: var(--gradient-primary);
+  color: white;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.header-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: var(--md-sys-color-on-secondary) !important;
+}
+
+.header-text {
+  flex: 1;
+}
+
+.header-text h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-secondary) !important;
+}
+
+.subtitle {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+  color: var(--md-sys-color-on-secondary) !important;
+  opacity: 0.9;
+}
+
+/* Garantir que o subtitle não fique lilás */
+.header-text .subtitle,
+.dialog-header .subtitle,
+.subtitle p,
+p.subtitle {
+  color: var(--md-sys-color-on-secondary) !important;
+  --mat-icon-color: var(--md-sys-color-on-secondary) !important;
+}
+
+:host ::ng-deep .subtitle,
+:host ::ng-deep .header-text .subtitle,
+:host ::ng-deep .dialog-header .subtitle {
+  color: var(--md-sys-color-on-secondary) !important;
+}
+
+.close-button {
+  color: var(--md-sys-color-on-secondary) !important;
+}
+
+/* Content */
+.dialog-content {
+  padding: 24px;
+  max-height: 500px;
+  overflow-y: auto;
+  background-color: var(--bg-card) !important;
+}
+
+/* Garantir fundo branco em todos os elementos */
+.cursos-list {
+  background-color: var(--bg-card) !important;
+}
+
+/* Stats */
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-darker);
+  border-radius: 12px;
+  border: 2px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: var(--primary-color);
+}
+
+.stat-card mat-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  color: var(--primary-color);
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-number {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-dark) !important;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-light) !important;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* Cores específicas para cada tipo de card */
+.stat-card-active .stat-label {
+  color: var(--success-color) !important;
+}
+
+.stat-card-inactive .stat-label {
+  color: var(--text-medium) !important;
+}
+
+.stat-card-total .stat-label {
+  color: var(--text-light) !important; /* Cinza padrão */
+}
+
+/* Lista */
+.cursos-list {
+  margin-top: 24px;
+}
+
+.list-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-dark) !important;
+  margin: 0 0 16px 0;
+}
+
+.list-title mat-icon {
+  color: var(--primary-color);
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+/* Curso Item */
+::ng-deep .curso-item {
+  border-bottom: 1px solid var(--border-color);
+  padding: 16px 0 !important;
+  height: auto !important;
+  min-height: 72px;
+  transition: background-color 0.2s ease;
+  background-color: var(--bg-card) !important;
+}
+
+::ng-deep .curso-item:hover {
+  background-color: var(--bg-darker) !important;
+}
+
+::ng-deep .curso-item:last-child {
+  border-bottom: none;
+}
+
+/* Fundo da lista branco */
+::ng-deep mat-list {
+  background-color: var(--bg-card) !important;
+}
+
+::ng-deep .curso-item mat-icon[matListItemIcon] {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+}
+
+.icon-active {
+  color: var(--success-color) !important;
+}
+
+.icon-inactive {
+  color: var(--text-light) !important;
+}
+
+.curso-nome {
+  font-weight: 500;
+  color: var(--text-dark) !important;
+  font-size: 16px;
+}
+
+.curso-info {
+  font-size: 12px;
+  color: var(--text-light) !important;
+  margin-top: 4px;
+}
+
+/* Garantir contraste no texto da lista */
+::ng-deep .curso-item .mdc-list-item__primary-text {
+  color: var(--text-dark) !important;
+}
+
+::ng-deep .curso-item .mdc-list-item__secondary-text {
+  color: var(--text-light) !important;
+}
+
+::ng-deep .curso-item [matListItemTitle] {
+  color: var(--text-dark) !important;
+}
+
+::ng-deep .curso-item [matListItemLine] {
+  color: var(--text-light) !important;
+}
+
+.status-chip {
+  font-size: 12px;
+  height: 24px;
+  padding: 0 12px;
+}
+
+/* Chip Ativo - Verde */
+::ng-deep .status-chip[highlighted="true"],
+::ng-deep .mat-mdc-chip.status-chip.mat-primary[highlighted="true"],
+::ng-deep .mat-mdc-chip.status-chip.mat-primary {
+  --mdc-chip-elevated-container-color: var(--success-color) !important;
+  --mdc-chip-container-color: var(--success-color) !important;
+  background-color: var(--success-color) !important;
+  color: white !important;
+}
+
+::ng-deep .status-chip[highlighted="true"] .mat-mdc-chip-action-label,
+::ng-deep .status-chip[highlighted="true"] span,
+::ng-deep .mat-mdc-chip.status-chip.mat-primary .mat-mdc-chip-action-label,
+::ng-deep .mat-mdc-chip.status-chip.mat-primary span {
+  color: white !important;
+}
+
+/* Chip Inativo - Cinza */
+::ng-deep .status-chip:not([highlighted="true"]) {
+  background-color: var(--text-medium) !important;
+  color: white !important;
+}
+
+/* No Cursos */
+.no-cursos {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 12px;
+}
+
+.no-cursos mat-icon {
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+  color: var(--text-light);
+  opacity: 0.5;
+}
+
+.no-cursos p {
+  font-size: 16px;
+  color: var(--text-light);
+  margin: 0;
+  text-align: center;
+}
+
+/* Actions */
+mat-dialog-actions {
+  padding: 16px 24px;
+  background: var(--bg-darker) !important;
+  margin: 0;
+}
+
+mat-dialog-actions button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Botão Fechar - Garantir cor branca */
+:host ::ng-deep mat-dialog-actions button[mat-raised-button][color="primary"] {
+  --mdc-filled-button-container-color: var(--primary-color) !important;
+  --mdc-filled-button-label-text-color: var(--md-sys-color-on-secondary) !important;
+  --mat-filled-button-state-layer-color: var(--md-sys-color-on-secondary) !important;
+  background-color: var(--primary-color) !important;
+  color: var(--md-sys-color-on-secondary) !important;
+}
+
+:host ::ng-deep mat-dialog-actions button[mat-raised-button][color="primary"] .mdc-button__label,
+:host ::ng-deep mat-dialog-actions button[mat-raised-button][color="primary"] mat-icon {
+  color: var(--md-sys-color-on-secondary) !important;
+}
+
+:host ::ng-deep mat-dialog-actions button[mat-raised-button][color="primary"]:hover {
+  background-color: var(--secondary-color) !important;
+  --mdc-filled-button-container-color: var(--secondary-color) !important;
+}
+
+/* Garantir que o dialog tenha fundo branco */
+::ng-deep mat-dialog-content {
+  background-color: var(--bg-card) !important;
+}
+
+::ng-deep .mat-mdc-dialog-content {
+  background-color: var(--bg-card) !important;
+}
+
+/* Scrollbar */
+.dialog-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dialog-content::-webkit-scrollbar-track {
+  background: var(--bg-darker);
+}
+
+.dialog-content::-webkit-scrollbar-thumb {
+  background: var(--gradient-primary);
+  border-radius: 3px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .dialog-container {
+    min-width: 280px;
+  }
+
+  .stats-container {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-number {
+    font-size: 24px;
+  }
+}
+
+/* Animações */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.curso-item {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* Overrides mais específicos para garantir cores dos chips */
+::ng-deep mat-chip.status-chip[highlighted="true"] {
+  background-color: var(--success-color) !important;
+  color: white !important;
+}
+
+::ng-deep mat-chip.status-chip:not([highlighted="true"]) {
+  background-color: var(--text-medium) !important;
+  color: white !important;
+}
+
+::ng-deep .mat-mdc-chip.status-chip[highlighted="true"] {
+  background-color: var(--success-color) !important;
+  color: white !important;
+}
+
+::ng-deep .mat-mdc-chip.status-chip:not([highlighted="true"]) {
+  background-color: var(--text-medium) !important;
+  color: white !important;
+}
+
+/* Overrides para todas as variações de chips */
+::ng-deep mat-chip[highlighted] {
+  background-color: var(--success-color) !important;
+  color: white !important;
+}
+
+::ng-deep mat-chip:not([highlighted]) {
+  background-color: var(--text-medium) !important;
+  color: white !important;
+}
+
+::ng-deep .mat-mdc-chip[highlighted] {
+  background-color: var(--success-color) !important;
+  color: white !important;
+}
+
+::ng-deep .mat-mdc-chip:not([highlighted]) {
+  background-color: var(--text-medium) !important;
+  color: white !important;
+}
+
+/* Overrides para propriedades CSS customizadas do Material */
+::ng-deep .mat-mdc-chip.status-chip[highlighted="true"] {
+  --mdc-chip-elevated-container-color: var(--success-color) !important;
+  --mdc-chip-label-text-color: white !important;
+}
+
+::ng-deep .mat-mdc-chip.status-chip:not([highlighted="true"]) {
+  --mdc-chip-elevated-container-color: var(--text-medium) !important;
+  --mdc-chip-label-text-color: white !important;
+}
+
+::ng-deep .mat-mdc-chip[highlighted] {
+  --mdc-chip-elevated-container-color: var(--success-color) !important;
+  --mdc-chip-label-text-color: white !important;
+}
+
+::ng-deep .mat-mdc-chip:not([highlighted]) {
+  --mdc-chip-elevated-container-color: var(--text-medium) !important;
+  --mdc-chip-label-text-color: white !important;
+}
