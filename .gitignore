@@ -6,12 +6,24 @@ backend/target/
 backend/data/
 frontend/node_modules/
 frontend/dist/
+frontend/coverage/
+frontend/out-tsc/
+frontend/tmp/
 frontend/.angular/
+frontend/.history/
 frontend/playwright-report/
 frontend/test-results/
 
 portifolium-files/
 *.log
+*.db
+*.mv.db
+*.trace.db
+*.h2.db
+*.sqlite
+*.sqlite3
+.DS_Store
+Thumbs.db
 BUGS.md
 PLANO_TESTE.md
 
