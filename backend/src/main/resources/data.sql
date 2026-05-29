@@ -37,6 +37,16 @@ WHERE usuario_id IN (
     SELECT id FROM usuario WHERE email = 'admin@uea.edu.br' OR id = 1
 );
 
+DELETE FROM curso_usuario
+WHERE usuario_id IN (
+    SELECT id FROM usuario WHERE email = 'admin@uea.edu.br' OR id = 1
+);
+
+DELETE FROM recovery_code
+WHERE usuario_id IN (
+    SELECT id FROM usuario WHERE email = 'admin@uea.edu.br' OR id = 1
+);
+
 DELETE FROM usuario
 WHERE email = 'admin@uea.edu.br' OR id = 1;
 

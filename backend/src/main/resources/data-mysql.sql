@@ -30,18 +30,36 @@ INSERT IGNORE INTO role (id, nome) VALUES
 (3, 'ROLE_SECRETARIO'),
 (4, 'ROLE_COORDENADOR_ATIVIDADE');
 
--- Script SQL para criar 10 pessoas na tabela Pessoa
-INSERT IGNORE INTO pessoa (id, nome, cpf, created_at, created_by, updated_at, updated_by) VALUES
+-- Recria o administrador padrao de forma idempotente.
+-- Isso evita que um volume antigo mantenha um email/senha divergente.
+DELETE FROM usuario_roles
+WHERE usuario_id IN (
+    SELECT id FROM usuario WHERE email = 'admin@uea.edu.br' OR id = 1
+);
+
+DELETE FROM curso_usuario
+WHERE usuario_id IN (
+    SELECT id FROM usuario WHERE email = 'admin@uea.edu.br' OR id = 1
+);
+
+DELETE FROM recovery_code
+WHERE usuario_id IN (
+    SELECT id FROM usuario WHERE email = 'admin@uea.edu.br' OR id = 1
+);
+
+DELETE FROM usuario
+WHERE email = 'admin@uea.edu.br' OR id = 1;
+
+DELETE FROM pessoa
+WHERE id = 1 OR cpf = '31452012040';
+
+-- Script SQL para criar a pessoa do administrador
+INSERT INTO pessoa (id, nome, cpf, created_at, created_by, updated_at, updated_by) VALUES
 (1, 'Administrador do Sistema', '31452012040', NOW(), 'system', NOW(), 'system');
 
 -- Populando a tabela Usuario com níveis de acesso e senhas criptografadas
 INSERT INTO usuario (id, email, senha, pessoa_id, created_at, updated_at) VALUES
-(1, 'admin@uea.edu.br', '$2a$10$hVfJIfpLdpbxwPiRfT2eheqDQlgklnzXZu81UYBa3bjOb5QtAAz.W', 1, NOW(), NOW()) -- Senha: admin123
-ON DUPLICATE KEY UPDATE
-email = VALUES(email),
-senha = VALUES(senha),
-pessoa_id = VALUES(pessoa_id),
-updated_at = NOW();
+(1, 'admin@uea.edu.br', '$2a$10$hVfJIfpLdpbxwPiRfT2eheqDQlgklnzXZu81UYBa3bjOb5QtAAz.W', 1, NOW(), NOW()); -- Senha: admin123
 
 
 
