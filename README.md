@@ -42,6 +42,12 @@ Use `docker-compose.yml` na raiz do repositorio. Configure as variaveis do `.env
 - `FRONTEND_URL`
 - variaveis de e-mail, se o envio estiver habilitado
 
+O backend garante um administrador padrao no startup. As credenciais iniciais podem ser ajustadas com:
+
+- `APP_SEED_ADMIN_EMAIL`
+- `APP_SEED_ADMIN_PASSWORD`
+- `APP_SEED_ADMIN_RESET_PASSWORD`
+
 O Nginx do frontend encaminha chamadas iniciadas em `/api/` para o servico interno `app:8080`.
 
 ## Validacao
